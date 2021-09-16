@@ -22,7 +22,7 @@ const theme = extendTheme({
 const MyApp = ({ Component, pageProps }: AppProps) => (
   <>
     <Head>
-      <title>Pokétwo Applications Site</title>
+      <title>Pokétwo Forms Site</title>
     </Head>
 
     <ChakraProvider theme={theme}>

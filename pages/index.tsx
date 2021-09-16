@@ -1,18 +1,14 @@
-import {
-  Alert,
-  AlertIcon,
-  Box,
-  Button,
-  Heading,
-  VStack,
-} from "@chakra-ui/react";
-import WrappedLink from "components/WrappedLink";
+import { Alert, AlertIcon, Box, Button, Heading, VStack } from "@chakra-ui/react";
 import Image from "next/image";
 
-const Home = ({ error }) => {
-  error = "Test";
+import WrappedLink from "~components/WrappedLink";
+import { AuthMode, withServerSideSession } from "~helpers/session";
+
+type HomeProps = { error: string };
+
+const Home = ({ error }: HomeProps) => {
   return (
-    <VStack spacing={6} py={12}>
+    <VStack spacing="6" py="12">
       {error && (
         <Alert maxW="md" status="error">
           <AlertIcon />
@@ -20,12 +16,13 @@ const Home = ({ error }) => {
         </Alert>
       )}
 
-      <VStack spacing={0}>
+      <VStack spacing="0">
         <Box>
           <Image
-            width={80}
-            height={80}
+            width="80"
+            height="80"
             src="https://poketwo.net/assets/logo.png"
+            alt="Pokétwo Logo"
           />
         </Box>
         <Heading>Sign in</Heading>
@@ -39,3 +36,15 @@ const Home = ({ error }) => {
 };
 
 export default Home;
+
+export const getServerSideProps = withServerSideSession<HomeProps>(async ({ req }) => {
+  const error = req.session.get<string>("error") ?? null;
+
+  if (!error) {
+    req.session.unset("error");
+    await req.session.save();
+    return { props: { error } };
+  }
+
+  return { props: { error: "" } };
+}, AuthMode.REQUIRE_NO_AUTH);

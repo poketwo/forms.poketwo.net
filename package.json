@@ -1,19 +1,23 @@
 {
-  "name": "apply.poketwo.net",
+  "name": "forms.poketwo.net",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
     "@chakra-ui/react": "^1.6.6",
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
+    "@formium/client": "^0.1.4",
+    "@formium/react": "^0.2.0",
     "discord-oauth2": "^2.7.1",
     "framer-motion": "^4.1.17",
     "next": "11.1.0",
+    "next-absolute-url": "^1.2.2",
     "next-iron-session": "^4.2.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
@@ -21,6 +25,44 @@
   },
   "devDependencies": {
     "@types/react": "^17.0.19",
+    "eslint": "7.32.0",
+    "eslint-config-next": "11.1.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.1",
     "typescript": "^4.3.5"
+  },
+  "eslintConfig": {
+    "extends": [
+      "plugin:import/recommended",
+      "plugin:import/typescript",
+      "next/core-web-vitals",
+      "prettier"
+    ],
+    "rules": {
+      "import/order": [
+        "warn",
+        {
+          "groups": [
+            [
+              "builtin",
+              "external"
+            ],
+            "internal",
+            [
+              "parent",
+              "index",
+              "sibling"
+            ]
+          ],
+          "newlines-between": "always",
+          "alphabetize": {
+            "order": "asc"
+          }
+        }
+      ]
+    }
+  },
+  "prettier": {
+    "printWidth": 100
   }
 }
