@@ -12,6 +12,30 @@ import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
 
+type SuccessProps = {
+  form: Form;
+};
+
+const Success = ({ form }: SuccessProps) => (
+  <Alert
+    maxW="3xl"
+    mx="auto"
+    p="8"
+    status="success"
+    flexDirection="column"
+    textAlign="center"
+    rounded="lg"
+  >
+    <AlertIcon boxSize="40px" mr={0} />
+    <AlertTitle mt={4} mb={1} fontSize="lg">
+      {form.name} Submitted
+    </AlertTitle>
+    <AlertDescription maxW="sm">
+      Your {form.name} has been submitted and is under review. Our team will get back to you soon.
+    </AlertDescription>
+  </Alert>
+);
+
 type FormPageProps = {
   id: string;
   form: Form;
@@ -19,7 +43,7 @@ type FormPageProps = {
   previous: Submit | null;
 };
 
-const FormPage = ({ id, form, user, previous }: FormPageProps) => {
+const FormContent = ({ id, form, user, previous }: FormPageProps) => {
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (values: any) => {
@@ -32,40 +56,21 @@ const FormPage = ({ id, form, user, previous }: FormPageProps) => {
   };
 
   if (success || previous) {
-    return (
-      <MainLayout user={user}>
-        <Alert
-          maxW="3xl"
-          mx="auto"
-          p="8"
-          status="success"
-          flexDirection="column"
-          textAlign="center"
-          rounded="lg"
-        >
-          <AlertIcon boxSize="40px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            {form.name} Submitted
-          </AlertTitle>
-          <AlertDescription maxW="sm">
-            Your {form.name} has been submitted and is under review. Our team will get back to you
-            soon.
-          </AlertDescription>
-        </Alert>
-      </MainLayout>
-    );
+    return <Success form={form} />;
   }
 
-  return (
-    <MainLayout user={user}>
-      <Box maxW="3xl" mx="auto">
-        <NoSSR>
-          <FormiumForm key={form.id} data={form} components={components} onSubmit={handleSubmit} />
-        </NoSSR>
-      </Box>
-    </MainLayout>
-  );
+  return <FormiumForm data={form} components={components} onSubmit={handleSubmit} />;
 };
+
+const FormPage = (props: FormPageProps) => (
+  <MainLayout user={props.user}>
+    <Box maxW="3xl" mx="auto">
+      <NoSSR>
+        <FormContent key={props.form.id} {...props} />
+      </NoSSR>
+    </Box>
+  </MainLayout>
+);
 
 export default FormPage;
 
