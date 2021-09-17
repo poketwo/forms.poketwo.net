@@ -1,5 +1,4 @@
-import { Alert, AlertDescription, AlertIcon, AlertTitle } from "@chakra-ui/alert";
-import { Box } from "@chakra-ui/layout";
+import { Alert, AlertDescription, AlertIcon, AlertTitle, Box } from "@chakra-ui/react";
 import { Results } from "@formium/client";
 import { FormiumForm } from "@formium/react";
 import { Form, Submit } from "@formium/types";

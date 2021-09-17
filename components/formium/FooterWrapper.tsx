@@ -1,4 +1,4 @@
-import { HStack } from "@chakra-ui/layout";
+import { HStack } from "@chakra-ui/react";
 import { PropsWithChildren } from "react";
 
 const FooterWrapper = ({ children }: PropsWithChildren<{}>) => (

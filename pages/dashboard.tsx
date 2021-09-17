@@ -1,5 +1,4 @@
-import Icon from "@chakra-ui/icon";
-import { Heading, HStack, Stack, Text } from "@chakra-ui/layout";
+import { Heading, HStack, Icon, Stack, Text } from "@chakra-ui/react";
 import { Form } from "@formium/types";
 import Link from "next/link";
 import { HiChevronRight } from "react-icons/hi";
