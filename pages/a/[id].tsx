@@ -51,6 +51,7 @@ const FormContent = ({ id, form, user, previous }: FormPageProps) => {
       ...values,
       discordTag: `${user.username}#${user.discriminator}`,
       discordUserId: user.id,
+      email: user.email,
     });
     setSuccess(true);
   };
