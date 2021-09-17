@@ -148,7 +148,7 @@ const MainLayout = ({ user, children }: MainLayoutProps) => {
             <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Ban Appeal" />
           </Stack>
 
-          <NavItem href="/" icon={<HiLogout />} label="Sign Out" />
+          <NavItem href="/api/logout" icon={<HiLogout />} label="Sign Out" />
         </Stack>
 
         <Box flex="1" bg={useColorModeValue("white", "gray.800")} p="8" overflow="scroll">

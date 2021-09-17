@@ -1,6 +1,7 @@
 import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 import { AppProps } from "next/app";
 import Head from "next/head";
+import NextNprogress from "nextjs-progressbar";
 
 const theme = extendTheme({
   colors: {
@@ -24,6 +25,14 @@ const MyApp = ({ Component, pageProps }: AppProps) => (
     <Head>
       <title>Pokétwo Forms Site</title>
     </Head>
+
+    <NextNprogress
+      color="#29D"
+      startPosition={0.3}
+      stopDelayMs={200}
+      height={3}
+      showOnShallow={true}
+    />
 
     <ChakraProvider theme={theme}>
       <Component {...pageProps} />
