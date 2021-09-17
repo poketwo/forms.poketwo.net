@@ -21,7 +21,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const token = await oauth.tokenRequest({
     code,
     grantType: "authorization_code",
-    scope: "identify",
+    scope: "identify email",
     redirectUri: `${origin}/api/callback`,
   });
   const user = await oauth.getUser(token.access_token);
