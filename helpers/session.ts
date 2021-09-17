@@ -6,6 +6,9 @@ import {
 } from "next";
 import { Session, withIronSession } from "next-iron-session";
 
+import { fetchMember } from "./db";
+import { Position, User } from "./types";
+
 export type NextIronRequest = NextApiRequest & { session: Session };
 
 export type NextIronGetServerSidePropsContext = GetServerSidePropsContext & {
@@ -13,19 +16,20 @@ export type NextIronGetServerSidePropsContext = GetServerSidePropsContext & {
 };
 
 export enum AuthMode {
-  REQUIRE_AUTH,
-  REQUIRE_NO_AUTH,
-  ANY,
+  NONE,
+  GUEST,
+  AUTHENTICATED,
 }
 
 enum SessionStatus {
   REDIRECT_LOGIN,
   REDIRECT_DASHBOARD,
+  FORBIDDEN,
   CONTINUE,
 }
 
 const IRON_CONFIG = {
-  password: process.env.SECRET_KEY,
+  password: process.env.SECRET_KEY as string,
   cookieName: "forms.poketwo.net",
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
@@ -33,27 +37,39 @@ const IRON_CONFIG = {
   },
 };
 
-const handleRequest = (req: NextIronRequest, mode: AuthMode) => {
-  const authenticated = req.session.get("user") !== undefined;
+const handleRequest = async (
+  req: NextIronRequest,
+  mode: AuthMode,
+  position: Position | undefined
+) => {
+  const user = req.session.get<User>("user");
+  const member = user ? await fetchMember(user.id) : undefined;
 
-  return !authenticated && mode === AuthMode.REQUIRE_AUTH
-    ? SessionStatus.REDIRECT_LOGIN
-    : authenticated && mode === AuthMode.REQUIRE_NO_AUTH
-    ? SessionStatus.REDIRECT_DASHBOARD
-    : SessionStatus.CONTINUE;
+  if (mode === AuthMode.GUEST && user) return SessionStatus.REDIRECT_DASHBOARD;
+  if (mode === AuthMode.AUTHENTICATED && !user) return SessionStatus.REDIRECT_LOGIN;
+
+  if (position) {
+    if (!member) return SessionStatus.FORBIDDEN;
+    if (member.position < position) return SessionStatus.FORBIDDEN;
+  }
+
+  return SessionStatus.CONTINUE;
 };
 
 export const withSession = (
   handler: (req: NextIronRequest, res: NextApiResponse) => void,
-  mode = AuthMode.ANY
+  mode: AuthMode,
+  position?: Position
 ) => {
   const wrapped = async (req: NextIronRequest, res: NextApiResponse) => {
-    const status = handleRequest(req, mode);
+    const status = await handleRequest(req, mode, position);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
       return res.redirect("/dashboard");
     } else if (status === SessionStatus.REDIRECT_LOGIN) {
       return res.redirect("/");
+    } else if (status === SessionStatus.FORBIDDEN) {
+      return res.status(403).end();
     }
 
     return handler(req, res);
@@ -63,20 +79,23 @@ export const withSession = (
 
 export const withServerSideSession = <T extends { [key: string]: any } = { [key: string]: any }>(
   handler: (ctx: NextIronGetServerSidePropsContext) => Promise<GetServerSidePropsResult<T>>,
-  mode = AuthMode.ANY
+  mode: AuthMode,
+  position?: Position
 ) => {
   const wrapped = async (
     ctx: NextIronGetServerSidePropsContext
   ): Promise<GetServerSidePropsResult<T>> => {
-    const status = handleRequest(ctx.req, mode);
+    const status = await handleRequest(ctx.req, mode, position);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
       return { redirect: { permanent: false, destination: "/dashboard" } };
     } else if (status === SessionStatus.REDIRECT_LOGIN) {
       return { redirect: { permanent: false, destination: "/" } };
+    } else if (status === SessionStatus.FORBIDDEN) {
+      return { redirect: { permanent: false, destination: "/dashboard" } };
     }
 
-    return handler(ctx);
+    return await handler(ctx);
   };
 
   return withIronSession(wrapped, IRON_CONFIG);

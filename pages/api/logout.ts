@@ -1,10 +1,10 @@
 import { NextApiResponse } from "next";
 
-import { NextIronRequest, withSession } from "helpers/session";
+import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 
 const handler = (req: NextIronRequest, res: NextApiResponse) => {
   req.session.destroy();
   res.redirect("/");
 };
 
-export default withSession(handler);
+export default withSession(handler, AuthMode.NONE);

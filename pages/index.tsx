@@ -4,7 +4,9 @@ import Image from "next/image";
 import WrappedLink from "~components/WrappedLink";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 
-type HomeProps = { error: string };
+type HomeProps = {
+  error: string | null;
+};
 
 const Home = ({ error }: HomeProps) => {
   return (
@@ -47,4 +49,4 @@ export const getServerSideProps = withServerSideSession<HomeProps>(async ({ req 
   }
 
   return { props: { error: "" } };
-}, AuthMode.REQUIRE_NO_AUTH);
+}, AuthMode.GUEST);

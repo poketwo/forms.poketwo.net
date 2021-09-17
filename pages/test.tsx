@@ -7,7 +7,7 @@ import { HiChevronRight } from "react-icons/hi";
 import MainLayout from "~components/MainLayout";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { User } from "~helpers/types";
+import { Position, User } from "~helpers/types";
 
 const FORMS = ["moderator-application", "ban-appeal"];
 
@@ -55,15 +55,19 @@ const Dashboard = ({ user, forms }: DashboardProps) => {
 
 export default Dashboard;
 
-export const getServerSideProps = withServerSideSession<DashboardProps>(async ({ req }) => {
-  const user = req.session.get<User>("user");
-  if (!user) throw new Error("User not found");
+export const getServerSideProps = withServerSideSession<DashboardProps>(
+  async ({ req }) => {
+    const user = req.session.get<User>("user");
+    if (!user) throw new Error("User not found");
 
-  const forms = await Promise.all(FORMS.map((x) => formium.getFormBySlug(x)));
-  return {
-    props: {
-      user,
-      forms,
-    },
-  };
-}, AuthMode.AUTHENTICATED);
+    const forms = await Promise.all(FORMS.map((x) => formium.getFormBySlug(x)));
+    return {
+      props: {
+        user,
+        forms,
+      },
+    };
+  },
+  AuthMode.AUTHENTICATED,
+  Position.ADMIN
+);

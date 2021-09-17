@@ -1,3 +1,4 @@
+import { Long } from "bson";
 import { NextApiRequest } from "next";
 import { Session } from "next-iron-session";
 
@@ -19,3 +20,25 @@ export type User = {
   email: string | null;
   verified: boolean;
 };
+
+export type RawMember = {
+  _id: Long;
+  muted?: boolean;
+  trading_muted?: boolean;
+  roles?: Long[];
+};
+
+export type Member = {
+  _id: string;
+  muted?: boolean;
+  trading_muted?: boolean;
+  roles?: string[];
+  position: Position;
+};
+
+export enum Position {
+  MEMBER = 0,
+  HELPER = 1,
+  MODERATOR = 2,
+  ADMIN = 3,
+}

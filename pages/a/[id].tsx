@@ -76,18 +76,21 @@ const FormPage = (props: FormPageProps) => (
 export default FormPage;
 
 export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ req, params }) => {
-  const id = params.id.toString();
+  const id = params?.id?.toString();
   const user = req.session.get<User>("user");
 
-  let form;
+  if (!id) throw new Error("ID not found");
+  if (!user) throw new Error("User not found");
 
+  let form;
   try {
     form = await formium.getFormBySlug(id);
   } catch (e) {
-    if (e.status === 404) {
-      return { notFound: true };
-    }
+    const err = e as any;
+    if (err.status === 404) return { notFound: true };
   }
+
+  if (!form) return { notFound: true };
 
   const submits: Results<Submit> = (await formium.findSubmits({
     formId: form.id,
@@ -104,4 +107,4 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
       previous: previous ?? null,
     },
   };
-}, AuthMode.REQUIRE_AUTH);
+}, AuthMode.AUTHENTICATED);

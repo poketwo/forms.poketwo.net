@@ -3,7 +3,7 @@ import { NextApiResponse } from "next";
 import absoluteUrl from "next-absolute-url";
 
 import oauth from "~helpers/oauth";
-import { withSession } from "~helpers/session";
+import { AuthMode, withSession } from "~helpers/session";
 import { NextIronRequest } from "~helpers/types";
 
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
@@ -27,4 +27,4 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   res.redirect(url);
 };
 
-export default withSession(handler);
+export default withSession(handler, AuthMode.NONE);
