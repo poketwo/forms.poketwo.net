@@ -3,7 +3,7 @@ import { Box } from "@chakra-ui/layout";
 import { Results } from "@formium/client";
 import { FormiumForm } from "@formium/react";
 import { Form, Submit } from "@formium/types";
-import React from "react";
+import React, { useState } from "react";
 import NoSSR from "react-no-ssr";
 
 import MainLayout from "~components/MainLayout";
@@ -20,17 +20,18 @@ type FormPageProps = {
 };
 
 const FormPage = ({ id, form, user, previous }: FormPageProps) => {
+  const [success, setSuccess] = useState(false);
+
   const handleSubmit = async (values: any) => {
     await formium.submitForm(id, {
       ...values,
       discordTag: `${user.username}#${user.discriminator}`,
       discordUserId: user.id,
     });
-
-    alert("Success");
+    setSuccess(true);
   };
 
-  if (previous) {
+  if (success || previous) {
     return (
       <MainLayout user={user}>
         <Alert
@@ -71,7 +72,16 @@ export default FormPage;
 export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ req, params }) => {
   const id = params.id.toString();
   const user = req.session.get<User>("user");
-  const form = await formium.getFormBySlug(id);
+
+  let form;
+
+  try {
+    form = await formium.getFormBySlug(id);
+  } catch (e) {
+    if (e.status === 404) {
+      return { notFound: true };
+    }
+  }
 
   const submits: Results<Submit> = (await formium.findSubmits({
     formId: form.id,

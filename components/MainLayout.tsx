@@ -145,7 +145,7 @@ const MainLayout = ({ user, children }: MainLayoutProps) => {
               icon={<HiShieldExclamation />}
               label="Moderator Application"
             />
-            <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Ban Appeal" />
+            <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Server Ban Appeal" />
           </Stack>
 
           <NavItem href="/api/logout" icon={<HiLogout />} label="Sign Out" />
