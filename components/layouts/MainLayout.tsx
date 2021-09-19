@@ -1,5 +1,6 @@
 import {
   Box,
+  BoxProps,
   Flex,
   FlexProps,
   HStack,
@@ -90,7 +91,7 @@ type NavItemProps = {
 
 const NavItem = ({ href, subtle = false, icon, label }: NavItemProps) => {
   const { asPath } = useRouter();
-  const active = href === asPath;
+  const active = asPath.startsWith(href);
 
   return (
     <Link href={href} passHref>
@@ -117,19 +118,43 @@ const NavItem = ({ href, subtle = false, icon, label }: NavItemProps) => {
   );
 };
 
-type MainLayoutProps = PropsWithChildren<{
+const Navigation = () => (
+  <Stack spacing="1">
+    <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
+    <NavItem
+      href="/a/moderator-application"
+      icon={<HiShieldExclamation />}
+      label="Moderator Application"
+    />
+    <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Server Ban Appeal" />
+  </Stack>
+);
+
+const AdminNavigation = () => (
+  <Stack spacing="1">
+    <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
+    <NavItem
+      href="/a/moderator-application"
+      icon={<HiShieldExclamation />}
+      label="Moderator Application"
+    />
+    <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Server Ban Appeal" />
+  </Stack>
+);
+
+export type MainLayoutProps = PropsWithChildren<{
   user: User;
+  contentContainerProps?: BoxProps;
 }>;
 
-const MainLayout = ({ user, children }: MainLayoutProps) => {
+const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutProps) => {
   return (
     <Box height="100vh" overflow="hidden" position="relative">
       <Flex h="full">
         <Stack
           spacing="4"
           direction="column"
-          px="4"
-          py="4"
+          p="4"
           w="64"
           bg="gray.900"
           color="white"
@@ -138,20 +163,14 @@ const MainLayout = ({ user, children }: MainLayoutProps) => {
         >
           <Profile user={user} />
 
-          <Stack spacing="1" flex="1">
-            <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
-            <NavItem
-              href="/a/moderator-application"
-              icon={<HiShieldExclamation />}
-              label="Moderator Application"
-            />
-            <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Server Ban Appeal" />
+          <Stack spacing="4" flex="1">
+            <Navigation />
           </Stack>
 
           <NavItem href="/api/logout" icon={<HiLogout />} label="Sign Out" />
         </Stack>
 
-        <Box flex="1" bg={useColorModeValue("white", "gray.800")} p="8" overflow="scroll">
+        <Box flex="1" bg="white" p="8" overflow="scroll" {...contentContainerProps}>
           {children}
         </Box>
       </Flex>

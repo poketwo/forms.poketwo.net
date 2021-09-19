@@ -3,7 +3,7 @@ import { Form } from "@formium/types";
 import Link from "next/link";
 import { HiChevronRight } from "react-icons/hi";
 
-import MainLayout from "~components/MainLayout";
+import MainLayout from "~components/layouts/MainLayout";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";

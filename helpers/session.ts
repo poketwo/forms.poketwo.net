@@ -44,6 +44,7 @@ const handleRequest = async (
 ) => {
   const user = req.session.get<User>("user");
   const member = user ? await fetchMember(user.id) : undefined;
+  req.session.set("member", member);
 
   if (mode === AuthMode.GUEST && user) return SessionStatus.REDIRECT_DASHBOARD;
   if (mode === AuthMode.AUTHENTICATED && !user) return SessionStatus.REDIRECT_LOGIN;

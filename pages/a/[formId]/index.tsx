@@ -5,8 +5,8 @@ import { Form, Submit } from "@formium/types";
 import React, { useState } from "react";
 import NoSSR from "react-no-ssr";
 
-import MainLayout from "~components/MainLayout";
 import components from "~components/formium";
+import MainLayout from "~components/layouts/MainLayout";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
@@ -75,10 +75,10 @@ const FormPage = (props: FormPageProps) => (
 export default FormPage;
 
 export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ req, params }) => {
-  const id = params?.id?.toString();
+  const id = params?.formId?.toString();
   const user = req.session.get<User>("user");
 
-  if (!id) throw new Error("ID not found");
+  if (!id) throw new Error("Form ID not found");
   if (!user) throw new Error("User not found");
 
   let form;
