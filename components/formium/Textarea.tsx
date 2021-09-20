@@ -1,5 +1,6 @@
 import { Textarea as ChakraTextarea } from "@chakra-ui/react";
 import { TextareaProps } from "@formium/react/dist/inputs";
+import TextareaAutosize from "react-textarea-autosize";
 
 const TextInput = ({
   disabled,
@@ -24,6 +25,9 @@ const TextInput = ({
     onBlur={onBlur}
     onChange={onChange}
     onFocus={onFocus}
+    as={TextareaAutosize}
+    resize="none"
+    overflow="hidden"
   />
 );
 
