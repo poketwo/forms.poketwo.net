@@ -28,6 +28,7 @@ const TextInput = ({
     as={TextareaAutosize}
     resize="none"
     overflow="hidden"
+    maxLength={700}
   />
 );
 

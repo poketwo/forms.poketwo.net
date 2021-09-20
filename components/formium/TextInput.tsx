@@ -24,6 +24,7 @@ const TextInput = ({
     onBlur={onBlur}
     onChange={onChange}
     onFocus={onFocus}
+    maxLength={100}
   />
 );
 
