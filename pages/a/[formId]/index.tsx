@@ -1,13 +1,27 @@
-import { Alert, AlertDescription, AlertIcon, AlertTitle, Box } from "@chakra-ui/react";
+import {
+  Alert,
+  AlertDescription,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogCloseButton,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  AlertIcon,
+  AlertTitle,
+  Box,
+  Button,
+} from "@chakra-ui/react";
 import { Results } from "@formium/client";
 import { FormiumForm } from "@formium/react";
 import { Form, Submit } from "@formium/types";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import NoSSR from "react-no-ssr";
 
 import components from "~components/formium";
 import MainLayout from "~components/layouts/MainLayout";
-import { formium } from "~helpers/formium";
+import { APIError, formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
 
@@ -35,6 +49,33 @@ const Success = ({ form }: SuccessProps) => (
   </Alert>
 );
 
+type ErrorAlertProps = {
+  title: string;
+  message: string;
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+const ErrorAlert = ({ title, message, isOpen, onClose }: ErrorAlertProps) => {
+  const ref = useRef<HTMLButtonElement>(null);
+
+  return (
+    <AlertDialog leastDestructiveRef={ref} onClose={onClose} isOpen={isOpen} isCentered>
+      <AlertDialogOverlay />
+      <AlertDialogContent>
+        <AlertDialogHeader>{title}</AlertDialogHeader>
+        <AlertDialogCloseButton />
+        <AlertDialogBody>{message}</AlertDialogBody>
+        <AlertDialogFooter>
+          <Button colorScheme="red" ref={ref} onClick={onClose}>
+            Close
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
 type FormPageProps = {
   id: string;
   form: Form;
@@ -44,22 +85,41 @@ type FormPageProps = {
 
 const FormContent = ({ id, form, user, previous }: FormPageProps) => {
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<APIError | undefined>();
 
   const handleSubmit = async (values: any) => {
-    await formium.submitForm(id, {
-      ...values,
-      discordTag: `${user.username}#${user.discriminator}`,
-      discordUserId: user.id,
-      email: user.email,
-    });
-    setSuccess(true);
+    try {
+      await formium.submitForm(id, {
+        ...values,
+        discordTag: `${user.username}#${user.discriminator}`,
+        discordUserId: user.id,
+        email: user.email,
+      });
+      setSuccess(true);
+    } catch (_e) {
+      const e = _e as APIError;
+      if (e.message.includes("The size of this submission is larger than the maximum")) {
+        e.message = "Your submission was too large. Please shorten your responses and try again.";
+      }
+      setError(e);
+    }
   };
 
   if (success || previous) {
     return <Success form={form} />;
   }
 
-  return <FormiumForm data={form} components={components} onSubmit={handleSubmit} />;
+  return (
+    <>
+      <FormiumForm data={form} components={components} onSubmit={handleSubmit} />
+      <ErrorAlert
+        isOpen={!!error}
+        title={`Error ${error?.status}`}
+        message={error?.message ?? ""}
+        onClose={() => setError(undefined)}
+      />
+    </>
+  );
 };
 
 const FormPage = (props: FormPageProps) => (
