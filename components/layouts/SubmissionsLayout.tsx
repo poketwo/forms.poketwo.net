@@ -49,6 +49,7 @@ const SubmissionsLayout = ({
   user,
   form,
   submits,
+  contentContainerProps,
   primaryKey,
   secondaryKey,
   children,
@@ -56,7 +57,7 @@ const SubmissionsLayout = ({
   return (
     <MainLayout user={user} contentContainerProps={{ p: "0", overflow: "hidden" }}>
       <Flex h="full">
-        <Stack spacing="4" w="96" p="8" borderRightWidth={1} overflow="scroll">
+        <Stack spacing="4" w="96" p="6" borderRightWidth={1} overflow="scroll">
           <Heading size="md">{form.name}</Heading>
 
           {submits.map((x) => (
@@ -69,7 +70,7 @@ const SubmissionsLayout = ({
           ))}
         </Stack>
 
-        <Box flex="1" bg="white" p="8" overflow="scroll">
+        <Box flex="1" bg="white" p="6" overflow="scroll" {...contentContainerProps}>
           {children}
         </Box>
       </Flex>
