@@ -5,15 +5,32 @@ import {
   NextApiResponse,
 } from "next";
 import { Session, withIronSession } from "next-iron-session";
+import { ParsedUrlQuery } from "querystring";
 
 import { fetchMember } from "./db";
-import { Position, User } from "./types";
+import { Member, Position, User } from "./types";
+
+const IRON_CONFIG = {
+  password: process.env.SECRET_KEY as string,
+  cookieName: "forms.poketwo.net",
+  cookieOptions: {
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 2419200,
+  },
+};
 
 export type NextIronRequest = NextApiRequest & { session: Session };
 
-export type NextIronGetServerSidePropsContext = GetServerSidePropsContext & {
-  req: NextIronRequest;
-};
+export type NextIronGetServerSidePropsContext<Q extends ParsedUrlQuery> =
+  GetServerSidePropsContext<Q> & {
+    req: NextIronRequest;
+  };
+
+export type InnerGetServerSidePropsContext<Q extends ParsedUrlQuery> =
+  NextIronGetServerSidePropsContext<Q> & {
+    user: User;
+    member: Member;
+  };
 
 export enum AuthMode {
   NONE,
@@ -28,24 +45,19 @@ enum SessionStatus {
   CONTINUE,
 }
 
-const IRON_CONFIG = {
-  password: process.env.SECRET_KEY as string,
-  cookieName: "forms.poketwo.net",
-  cookieOptions: {
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 2419200,
-  },
-};
-
-const handleRequest = async (
-  req: NextIronRequest,
-  mode: AuthMode,
-  position: Position | undefined
-) => {
+const addMemberInfo = async (req: NextIronRequest) => {
   const user = req.session.get<User>("user");
   const member = user ? await fetchMember(user.id) : undefined;
   req.session.set("member", member);
+  return { user, member };
+};
 
+const handleRequest = async (
+  user: User | undefined,
+  member: Member | undefined,
+  mode: AuthMode,
+  position: Position | undefined
+) => {
   if (mode === AuthMode.GUEST && user) return SessionStatus.REDIRECT_DASHBOARD;
   if (mode === AuthMode.AUTHENTICATED && !user) return SessionStatus.REDIRECT_LOGIN;
 
@@ -63,7 +75,8 @@ export const withSession = (
   position?: Position
 ) => {
   const wrapped = async (req: NextIronRequest, res: NextApiResponse) => {
-    const status = await handleRequest(req, mode, position);
+    const { user, member } = await addMemberInfo(req);
+    const status = await handleRequest(user, member, mode, position);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
       return res.redirect("/dashboard");
@@ -78,15 +91,19 @@ export const withSession = (
   return withIronSession(wrapped, IRON_CONFIG);
 };
 
-export const withServerSideSession = <T extends { [key: string]: any } = { [key: string]: any }>(
-  handler: (ctx: NextIronGetServerSidePropsContext) => Promise<GetServerSidePropsResult<T>>,
+export const withServerSideSession = <
+  T extends { [key: string]: any } = { [key: string]: any },
+  Q extends ParsedUrlQuery = ParsedUrlQuery
+>(
+  handler: (ctx: NextIronGetServerSidePropsContext<Q>) => Promise<GetServerSidePropsResult<T>>,
   mode: AuthMode,
   position?: Position
 ) => {
   const wrapped = async (
-    ctx: NextIronGetServerSidePropsContext
+    ctx: NextIronGetServerSidePropsContext<Q>
   ): Promise<GetServerSidePropsResult<T>> => {
-    const status = await handleRequest(ctx.req, mode, position);
+    const { user, member } = await addMemberInfo(ctx.req);
+    const status = await handleRequest(user, member, mode, position);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
       return { redirect: { permanent: false, destination: "/dashboard" } };
