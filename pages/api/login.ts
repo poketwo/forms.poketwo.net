@@ -20,7 +20,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const state = crypto.createHash("sha256").update(id).digest("hex");
   const url = oauth.generateAuthUrl({
     state,
-    scope: "identify",
+    scope: "identify email",
     redirectUri: `${origin}/api/callback`,
   });
 
