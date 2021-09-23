@@ -35,7 +35,7 @@ const Success = ({ form }: SuccessProps) => (
     maxW="3xl"
     mx="auto"
     p="8"
-    status="success"
+    status="info"
     flexDirection="column"
     textAlign="center"
     rounded="lg"
