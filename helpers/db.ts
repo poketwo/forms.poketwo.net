@@ -79,7 +79,7 @@ export const fetchSubmission = async <T = any>(id: string) => {
 export const fetchSubmissions = async <T = any>(formId: string, userId?: string) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
-  let query: any = { form_id: ObjectId.createFromHexString(formId) };
+  let query: any = { form_id: formId };
   if (userId) query = { ...query, user_id: Long.fromString(userId) };
   return collection.find<Submission<T>>(query).sort({ _id: -1 });
 };

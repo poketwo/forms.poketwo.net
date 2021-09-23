@@ -90,7 +90,7 @@ const FormContent = ({ form, previous }: FormPageProps) => {
   const handleSubmit = async (values: any) => {
     try {
       await delay(300);
-      await fetch(`/api/forms/${form.id}/submissions`, {
+      await fetch(`/api/forms/${form.slug}/submissions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),

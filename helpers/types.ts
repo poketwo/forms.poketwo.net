@@ -51,7 +51,7 @@ export enum SubmissionStatus {
 
 export type Submission<T = any> = {
   _id: ObjectId;
-  form_id: ObjectId;
+  form_id: string;
   user_id: Long;
   user_tag: string;
   email: string | null;

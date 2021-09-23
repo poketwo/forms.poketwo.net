@@ -1,4 +1,4 @@
-import { Long, ObjectId } from "bson";
+import { Long } from "bson";
 import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
@@ -15,7 +15,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   if (!user) return res.status(401);
 
   await createSubmission({
-    form_id: ObjectId.createFromHexString(formId),
+    form_id: formId,
     user_id: Long.fromString(user.id),
     user_tag: `${user.username}#${user.discriminator}`,
     email: user.email,
