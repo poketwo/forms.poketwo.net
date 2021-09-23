@@ -2,7 +2,7 @@ import { Box } from "@chakra-ui/react";
 import { PropsWithChildren } from "react";
 
 const FieldWrapper = ({ children }: PropsWithChildren<{}>) => (
-  <Box rounded="md" borderWidth={1} p="4">
+  <Box rounded="md" shadow="base" p="4">
     {children}
   </Box>
 );

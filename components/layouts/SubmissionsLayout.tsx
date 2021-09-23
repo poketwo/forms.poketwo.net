@@ -1,5 +1,4 @@
-import Icon from "@chakra-ui/icon";
-import { Box, Flex, Heading, HStack, Stack, Text } from "@chakra-ui/layout";
+import { Box, Divider, Flex, Heading, HStack, Icon, Stack, Text } from "@chakra-ui/react";
 import { Form } from "@formium/types";
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
@@ -10,11 +9,11 @@ import MainLayout, { MainLayoutProps } from "./MainLayout";
 
 import { SerializableSubmission, SubmissionStatus } from "~helpers/types";
 
-type SubmissionCardProps = {
+type SubmissionItemProps = {
   submission: SerializableSubmission;
 };
 
-const SubmissionCard = ({ submission }: SubmissionCardProps) => {
+const SubmissionItem = ({ submission }: SubmissionItemProps) => {
   const { query, asPath } = useRouter();
   const { formId } = query;
 
@@ -24,9 +23,8 @@ const SubmissionCard = ({ submission }: SubmissionCardProps) => {
     <Link href={href}>
       <a>
         <HStack
-          borderWidth={1}
-          rounded="md"
-          p="4"
+          px="6"
+          py="1"
           transition="all 0.2s"
           bg={asPath.startsWith(href) ? "gray.100" : undefined}
           _hover={{ backgroundColor: "gray.100" }}
@@ -68,11 +66,13 @@ const SubmissionsLayout = ({
   return (
     <MainLayout user={user} contentContainerProps={{ p: "0", overflow: "hidden" }}>
       <Flex h="full">
-        <Stack spacing="4" w="96" p="6" borderRightWidth={1} overflow="scroll">
-          <Heading size="md">{form.name}</Heading>
+        <Stack spacing="0" divider={<Divider />} w="96" shadow="base" overflow="scroll">
+          <Heading m="6" size="md">
+            {form.name}
+          </Heading>
 
           {sorted.map((x) => (
-            <SubmissionCard key={x._id} submission={x} />
+            <SubmissionItem key={x._id} submission={x} />
           ))}
         </Stack>
 

@@ -17,13 +17,7 @@ type FormCardProps = {
 const FormCard = ({ form }: FormCardProps) => (
   <Link href={`/a/${form.slug}`}>
     <a>
-      <HStack
-        borderWidth={1}
-        rounded="md"
-        p="4"
-        transition="all 0.2s"
-        _hover={{ backgroundColor: "gray.100" }}
-      >
+      <HStack shadow="base" rounded="md" p="4" transition="all 0.2s" _hover={{ shadow: "lg" }}>
         <Text fontSize="md" flex="1">
           {form.name}
         </Text>

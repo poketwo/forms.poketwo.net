@@ -111,7 +111,7 @@ const SubmissionContent = ({ form, submission }: SubmissionContentProps) => {
   return (
     <Stack spacing="4">
       {ownedFields.map((x) => (
-        <Stack key={x} borderWidth={1} rounded="md" p="4" alignItems="flex-start">
+        <Stack key={x} shadow="base" rounded="md" p="4" alignItems="flex-start">
           <Text
             fontWeight="bold"
             _after={{
@@ -166,7 +166,7 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
       contentContainerProps={{ p: 0 }}
     >
       <Flex direction="column" h="full" overflow="hidden">
-        <Box px="6" py="3" borderBottomWidth={1}>
+        <Box px="6" py="3" shadow="base">
           <SubmissionHeader submission={submission} onSetStatus={handleSetStatus} />
         </Box>
         <Box flex="1" overflow="scroll" p="6">
