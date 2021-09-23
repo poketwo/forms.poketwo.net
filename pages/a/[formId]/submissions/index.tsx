@@ -46,7 +46,7 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.id);
+    const _submissions = await fetchSubmissions(form.slug);
     const submissions = await _submissions.toArray();
 
     return {
