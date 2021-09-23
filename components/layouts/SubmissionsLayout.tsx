@@ -1,21 +1,21 @@
 import { Box, Flex, Heading, Stack, Text } from "@chakra-ui/layout";
-import { Form, Submit } from "@formium/types";
+import { Form } from "@formium/types";
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
 
 import MainLayout, { MainLayoutProps } from "./MainLayout";
 
+import { SerializableSubmission } from "~helpers/types";
+
 type SubmissionCardProps = {
-  submit: Submit;
-  primaryKey: string;
-  secondaryKey: string;
+  submission: SerializableSubmission;
 };
 
-const SubmissionCard = ({ submit, primaryKey, secondaryKey }: SubmissionCardProps) => {
+const SubmissionCard = ({ submission }: SubmissionCardProps) => {
   const { query, asPath } = useRouter();
   const { formId } = query;
 
-  const href = `/a/${formId}/submissions/${submit.id}`;
+  const href = `/a/${formId}/submissions/${submission._id}`;
 
   return (
     <Link href={href}>
@@ -28,9 +28,9 @@ const SubmissionCard = ({ submit, primaryKey, secondaryKey }: SubmissionCardProp
           bg={asPath.startsWith(href) ? "gray.100" : undefined}
           _hover={{ backgroundColor: "gray.100" }}
         >
-          <Text fontWeight="bold">{submit.data[primaryKey]}</Text>
+          <Text fontWeight="bold">{submission.user_tag}</Text>
           <Text color="gray.500" isTruncated>
-            {submit.data[secondaryKey]}
+            {submission.email}
           </Text>
         </Box>
       </a>
@@ -40,18 +40,14 @@ const SubmissionCard = ({ submit, primaryKey, secondaryKey }: SubmissionCardProp
 
 type SubmissionsLayoutProps = MainLayoutProps & {
   form: Form;
-  submits: Submit[];
-  primaryKey: string;
-  secondaryKey: string;
+  submissions: SerializableSubmission[];
 };
 
 const SubmissionsLayout = ({
   user,
   form,
-  submits,
+  submissions,
   contentContainerProps,
-  primaryKey,
-  secondaryKey,
   children,
 }: SubmissionsLayoutProps) => {
   return (
@@ -60,13 +56,8 @@ const SubmissionsLayout = ({
         <Stack spacing="4" w="96" p="6" borderRightWidth={1} overflow="scroll">
           <Heading size="md">{form.name}</Heading>
 
-          {submits.map((x) => (
-            <SubmissionCard
-              key={x.id}
-              submit={x}
-              primaryKey={primaryKey}
-              secondaryKey={secondaryKey}
-            />
+          {submissions.map((x) => (
+            <SubmissionCard key={x._id} submission={x} />
           ))}
         </Stack>
 

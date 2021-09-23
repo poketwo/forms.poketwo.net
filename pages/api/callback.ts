@@ -9,14 +9,11 @@ import { NextIronRequest } from "~helpers/types";
 
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const id = req.session.get("id");
-  if (!id) res.status(401);
+  if (!id) return res.status(401).end();
 
   const { code, state } = req.query;
   const currentState = crypto.createHash("sha256").update(id).digest("hex");
-  if (typeof code !== "string" || currentState !== state) {
-    res.status(400);
-    return;
-  }
+  if (typeof code !== "string" || currentState !== state) return res.status(400).end();
 
   const { origin } = absoluteUrl(req);
   const token = await oauth.tokenRequest({

@@ -113,7 +113,7 @@ export const withServerSideSession = <
       return { redirect: { permanent: false, destination: "/dashboard" } };
     }
 
-    return await handler(ctx);
+    return handler(ctx);
   };
 
   return withIronSession(wrapped, IRON_CONFIG);

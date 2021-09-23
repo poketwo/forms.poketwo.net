@@ -1,7 +1,8 @@
+import { ObjectId } from "bson";
 import { Long, MongoClient } from "mongodb";
 import NodeCache from "node-cache";
 
-import { Member, Position, RawMember } from "./types";
+import { Member, Position, RawMember, Submission } from "./types";
 
 const client = new MongoClient(process.env.DATABASE_URI as string);
 
@@ -54,17 +55,37 @@ export const fetchMember = wrapCache("member", async (id: string): Promise<Membe
 export const fetchGuild = async (id: string) => {
   const db = await dbPromise;
   const collection = db.collection("guild");
-  return await collection.findOne({ _id: Long.fromString(id) });
+  return collection.findOne({ _id: Long.fromString(id) });
 };
 
 export const fetchChannel = async (id: string) => {
   const db = await dbPromise;
   const collection = db.collection("channel");
-  return await collection.findOne({ _id: Long.fromString(id) });
+  return collection.findOne({ _id: Long.fromString(id) });
 };
 
 export const fetchMessage = async (id: string) => {
   const db = await dbPromise;
   const collection = db.collection("message");
-  return await collection.findOne({ _id: Long.fromString(id) });
+  return collection.findOne({ _id: Long.fromString(id) });
+};
+
+export const fetchSubmission = async <T = any>(id: string) => {
+  const db = await dbPromise;
+  const collection = db.collection("submission");
+  return collection.findOne<Submission<T>>({ _id: ObjectId.createFromHexString(id) });
+};
+
+export const fetchSubmissions = async <T = any>(formId: string, userId?: string) => {
+  const db = await dbPromise;
+  const collection = db.collection("submission");
+  let query: any = { form_id: ObjectId.createFromHexString(formId) };
+  if (userId) query = { ...query, user_id: Long.fromString(userId) };
+  return collection.find<Submission<T>>(query).sort({ _id: -1 });
+};
+
+export const createSubmission = async <T = any>(submission: Omit<Submission<T>, "_id">) => {
+  const db = await dbPromise;
+  const collection = db.collection("submission");
+  return collection.insertOne(submission);
 };

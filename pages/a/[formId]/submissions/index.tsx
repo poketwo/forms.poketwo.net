@@ -1,30 +1,24 @@
 import { Heading, Stack, Text } from "@chakra-ui/layout";
-import { Results } from "@formium/client";
-import { Form, Submit } from "@formium/types";
+import { Form } from "@formium/types";
 
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
+import { fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { Position, User } from "~helpers/types";
+import { makeSerializable, Position, SerializableSubmission, User } from "~helpers/types";
 
 type SubmissionsPageProps = {
   user: User;
   form: Form;
-  submits: Submit[];
+  submissions: SerializableSubmission[];
 };
 
-const SubmissionsPage = ({ user, form, submits }: SubmissionsPageProps) => {
+const SubmissionsPage = ({ user, form, submissions }: SubmissionsPageProps) => {
   return (
-    <SubmissionsLayout
-      user={user}
-      form={form}
-      submits={submits}
-      primaryKey="discordTag"
-      secondaryKey="email"
-    >
+    <SubmissionsLayout user={user} form={form} submissions={submissions}>
       <Stack spacing="4" alignItems="center">
         <Heading size="lg">
-          {submits.length} Submission{submits.length === 1 ? "" : "s"}
+          {submissions.length} Submission{submissions.length === 1 ? "" : "s"}
         </Heading>
         <Text>use the sidebar to view wow</Text>
       </Stack>
@@ -52,13 +46,16 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
 
     if (!form) return { notFound: true };
 
-    const submits: Results<Submit> = (await formium.findSubmits({
-      formId: form.id,
-      sort: "-createAt",
-    })) as any;
+    const _submissions = await fetchSubmissions(form.id);
+    const submissions = await _submissions.toArray();
 
     return {
-      props: { id, form, user, submits: submits.data },
+      props: {
+        id,
+        form,
+        user,
+        submissions: submissions.map(makeSerializable),
+      },
     };
   },
   AuthMode.AUTHENTICATED,

@@ -13,17 +13,18 @@ import {
   Box,
   Button,
 } from "@chakra-ui/react";
-import { Results } from "@formium/client";
 import { FormiumForm } from "@formium/react";
-import { Form, Submit } from "@formium/types";
+import { Form } from "@formium/types";
 import React, { useRef, useState } from "react";
 import NoSSR from "react-no-ssr";
 
 import components from "~components/formium";
 import MainLayout from "~components/layouts/MainLayout";
-import { APIError, formium } from "~helpers/formium";
+import { fetchSubmissions } from "~helpers/db";
+import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
+import { delay } from "~helpers/utils";
 
 type SuccessProps = {
   form: Form;
@@ -77,31 +78,26 @@ const ErrorAlert = ({ title, message, isOpen, onClose }: ErrorAlertProps) => {
 };
 
 type FormPageProps = {
-  id: string;
   form: Form;
   user: User;
-  previous: Submit | null;
+  previous: boolean;
 };
 
-const FormContent = ({ id, form, user, previous }: FormPageProps) => {
+const FormContent = ({ form, previous }: FormPageProps) => {
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<APIError | undefined>();
+  const [error, setError] = useState<Error | undefined>();
 
   const handleSubmit = async (values: any) => {
     try {
-      await formium.submitForm(id, {
-        ...values,
-        discordTag: `${user.username}#${user.discriminator}`,
-        discordUserId: user.id,
-        email: user.email,
+      await delay(300);
+      await fetch(`/api/forms/${form.id}/submissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
       });
       setSuccess(true);
     } catch (_e) {
-      const e = _e as APIError;
-      if (e.message.includes("The size of this submission is larger than the maximum")) {
-        e.message = "Your submission was too large. Please shorten your responses and try again.";
-      }
-      setError(e);
+      setError(_e as Error);
     }
   };
 
@@ -114,7 +110,7 @@ const FormContent = ({ id, form, user, previous }: FormPageProps) => {
       <FormiumForm data={form} components={components} onSubmit={handleSubmit} />
       <ErrorAlert
         isOpen={!!error}
-        title={`Error ${error?.status}`}
+        title="Error"
         message={error?.message ?? ""}
         onClose={() => setError(undefined)}
       />
@@ -151,19 +147,14 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
 
   if (!form) return { notFound: true };
 
-  const submits: Results<Submit> = (await formium.findSubmits({
-    formId: form.id,
-    sort: "-createAt",
-  })) as any;
-
-  const previous = submits.data.find((x) => x.data.discordUserId === user.id);
+  const _submissions = await fetchSubmissions(form.id);
+  const submissions = await _submissions.limit(1).toArray();
 
   return {
     props: {
-      id,
       form,
       user,
-      previous: previous ?? null,
+      previous: submissions.length > 0,
     },
   };
 }, AuthMode.AUTHENTICATED);

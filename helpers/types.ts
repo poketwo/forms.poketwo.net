@@ -1,4 +1,4 @@
-import { Long } from "bson";
+import { Long, ObjectId } from "bson";
 import { NextApiRequest } from "next";
 import { Session } from "next-iron-session";
 
@@ -42,3 +42,38 @@ export enum Position {
   MODERATOR = 2,
   ADMIN = 3,
 }
+
+export enum SubmissionStatus {
+  REVIEW,
+  REJECTED,
+  ACCEPTED,
+}
+
+export type Submission<T = any> = {
+  _id: ObjectId;
+  form_id: ObjectId;
+  user_id: Long;
+  user_tag: string;
+  email: string | null;
+  data: T;
+  status?: SubmissionStatus;
+};
+
+export type SerializableSubmission<T = any> = {
+  _id: string;
+  form_id: string;
+  user_id: string;
+  user_tag: string;
+  email: string | null;
+  data: T;
+  status?: SubmissionStatus;
+};
+
+export const makeSerializable = <T = any>(
+  submission: Submission<T>
+): SerializableSubmission<T> => ({
+  ...submission,
+  _id: submission._id.toString(),
+  form_id: submission.form_id.toString(),
+  user_id: submission.user_id.toString(),
+});
