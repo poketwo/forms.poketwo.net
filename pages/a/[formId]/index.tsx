@@ -11,7 +11,7 @@ import {
   AlertIcon,
   AlertTitle,
   Box,
-  Button,
+  Button
 } from "@chakra-ui/react";
 import { FormiumForm } from "@formium/react";
 import { Form } from "@formium/types";
@@ -25,6 +25,7 @@ import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
 import { delay } from "~helpers/utils";
+
 
 type SuccessProps = {
   form: Form;
@@ -147,7 +148,7 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
 
   if (!form) return { notFound: true };
 
-  const _submissions = await fetchSubmissions(form.id, user.id);
+  const _submissions = await fetchSubmissions(form.slug, user.id);
   const submissions = await _submissions.limit(1).toArray();
 
   return {
