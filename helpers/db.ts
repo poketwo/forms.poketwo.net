@@ -1,5 +1,5 @@
 import { ObjectId } from "bson";
-import { Long, MongoClient } from "mongodb";
+import { Long, MongoClient, UpdateFilter } from "mongodb";
 import NodeCache from "node-cache";
 
 import { Member, Position, RawMember, Submission } from "./types";
@@ -74,6 +74,15 @@ export const fetchSubmission = async <T = any>(id: string) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
   return collection.findOne<Submission<T>>({ _id: ObjectId.createFromHexString(id) });
+};
+
+export const updateSubmission = async <T = any>(
+  id: string,
+  update: UpdateFilter<Omit<Submission<T>, "_id">>
+) => {
+  const db = await dbPromise;
+  const collection = db.collection("submission");
+  return collection.updateOne({ _id: ObjectId.createFromHexString(id) }, update);
 };
 
 export const fetchSubmissions = async <T = any>(formId: string, userId?: string) => {

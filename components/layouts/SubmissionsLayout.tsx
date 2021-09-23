@@ -1,11 +1,14 @@
-import { Box, Flex, Heading, Stack, Text } from "@chakra-ui/layout";
+import Icon from "@chakra-ui/icon";
+import { Box, Flex, Heading, HStack, Stack, Text } from "@chakra-ui/layout";
 import { Form } from "@formium/types";
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
+import { useMemo } from "react";
+import { HiCheck, HiX } from "react-icons/hi";
 
 import MainLayout, { MainLayoutProps } from "./MainLayout";
 
-import { SerializableSubmission } from "~helpers/types";
+import { SerializableSubmission, SubmissionStatus } from "~helpers/types";
 
 type SubmissionCardProps = {
   submission: SerializableSubmission;
@@ -20,7 +23,7 @@ const SubmissionCard = ({ submission }: SubmissionCardProps) => {
   return (
     <Link href={href}>
       <a>
-        <Box
+        <HStack
           borderWidth={1}
           rounded="md"
           p="4"
@@ -28,11 +31,18 @@ const SubmissionCard = ({ submission }: SubmissionCardProps) => {
           bg={asPath.startsWith(href) ? "gray.100" : undefined}
           _hover={{ backgroundColor: "gray.100" }}
         >
-          <Text fontWeight="bold">{submission.user_tag}</Text>
-          <Text color="gray.500" isTruncated>
-            {submission.email}
-          </Text>
-        </Box>
+          <Box flex="1">
+            <Text fontWeight="bold">{submission.user_tag}</Text>
+            <Text color="gray.500" isTruncated>
+              {submission.email}
+            </Text>
+          </Box>
+
+          {submission.status === SubmissionStatus.ACCEPTED && (
+            <Icon as={HiCheck} color="green.500" />
+          )}
+          {submission.status === SubmissionStatus.REJECTED && <Icon as={HiX} color="red.500" />}
+        </HStack>
       </a>
     </Link>
   );
@@ -50,13 +60,18 @@ const SubmissionsLayout = ({
   contentContainerProps,
   children,
 }: SubmissionsLayoutProps) => {
+  const sorted = useMemo(
+    () => [...submissions].sort((a, b) => (a.status ?? 0) - (b.status ?? 0)),
+    [submissions]
+  );
+
   return (
     <MainLayout user={user} contentContainerProps={{ p: "0", overflow: "hidden" }}>
       <Flex h="full">
         <Stack spacing="4" w="96" p="6" borderRightWidth={1} overflow="scroll">
           <Heading size="md">{form.name}</Heading>
 
-          {submissions.map((x) => (
+          {sorted.map((x) => (
             <SubmissionCard key={x._id} submission={x} />
           ))}
         </Stack>

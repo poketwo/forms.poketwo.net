@@ -1,21 +1,71 @@
 import { Button } from "@chakra-ui/button";
 import { Box, Code, Divider, Flex, Heading, HStack, Stack, Text } from "@chakra-ui/layout";
+import { ThemeTypings } from "@chakra-ui/styled-system";
 import { chakra } from "@chakra-ui/system";
 import { Form } from "@formium/types";
+import { ReactElement, useState } from "react";
 import { HiCheck, HiX } from "react-icons/hi";
 
+import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { makeSerializable, Position, SerializableSubmission, User } from "~helpers/types";
+import {
+  makeSerializable,
+  Position,
+  SerializableSubmission,
+  SubmissionStatus,
+  User,
+} from "~helpers/types";
+import { delay } from "~helpers/utils";
+
+type HeaderButtonProps = {
+  colorScheme: ThemeTypings["colorSchemes"];
+  icon: ReactElement;
+  label: string;
+  onClick: () => void;
+};
+
+const HeaderButton = ({ colorScheme, icon, label, onClick }: HeaderButtonProps) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | undefined>();
+
+  const handleClick = async () => {
+    try {
+      setLoading(true);
+      await delay(300);
+      await onClick();
+    } catch (e) {
+      setError(e as Error);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <>
+      <Button
+        size="sm"
+        colorScheme={colorScheme}
+        leftIcon={icon}
+        onClick={handleClick}
+        isLoading={loading}
+      >
+        {label}
+      </Button>
+      <ErrorAlert error={error} setError={setError} />
+    </>
+  );
+};
 
 type SubmissionHeaderProps = {
   submission: SerializableSubmission;
+  onSetStatus: (status: SubmissionStatus) => void;
 };
 
-const SubmissionHeader = ({ submission }: SubmissionHeaderProps) => {
+const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) => {
   const [name, discrim] = submission.user_tag.split("#", 2);
+
   return (
     <HStack>
       <Heading size="md">
@@ -28,12 +78,18 @@ const SubmissionHeader = ({ submission }: SubmissionHeaderProps) => {
         {submission.user_id}
       </Text>
 
-      <Button colorScheme="green" size="sm" leftIcon={<HiCheck />}>
-        Accept
-      </Button>
-      <Button colorScheme="red" size="sm" leftIcon={<HiX />}>
-        Reject
-      </Button>
+      <HeaderButton
+        colorScheme="green"
+        icon={<HiCheck />}
+        label="Accept"
+        onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
+      />
+      <HeaderButton
+        colorScheme="red"
+        icon={<HiX />}
+        label="Reject"
+        onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
+      />
     </HStack>
   );
 };
@@ -93,6 +149,15 @@ type SubmissionPageProps = {
 };
 
 const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageProps) => {
+  const handleSetStatus = async (status: SubmissionStatus) => {
+    const resp = await fetch(`/api/forms/${form.slug}/submissions/${submission._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+  };
+
   return (
     <SubmissionsLayout
       user={user}
@@ -102,7 +167,7 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="3" borderBottomWidth={1}>
-          <SubmissionHeader submission={submission} />
+          <SubmissionHeader submission={submission} onSetStatus={handleSetStatus} />
         </Box>
         <Box flex="1" overflow="scroll" p="6">
           <SubmissionContent key={form.id} form={form} submission={submission} />

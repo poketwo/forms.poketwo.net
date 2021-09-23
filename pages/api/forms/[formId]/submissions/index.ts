@@ -8,7 +8,7 @@ import { User } from "~helpers/types";
 
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const { formId } = req.query;
-  if (req.method !== "POST") return res.status(405).end();
+  if (req.method !== "POST") return res.status(405).send("Method not allowed");
   if (typeof formId !== "string") return res.status(400).end();
 
   const user = req.session.get<User>("user");

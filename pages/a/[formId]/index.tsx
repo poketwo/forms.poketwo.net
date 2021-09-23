@@ -1,31 +1,17 @@
-import {
-  Alert,
-  AlertDescription,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogCloseButton,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button
-} from "@chakra-ui/react";
+import { Alert, AlertDescription, AlertIcon, AlertTitle, Box } from "@chakra-ui/react";
 import { FormiumForm } from "@formium/react";
 import { Form } from "@formium/types";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import NoSSR from "react-no-ssr";
 
 import components from "~components/formium";
+import ErrorAlert from "~components/formium/ErrorAlert";
 import MainLayout from "~components/layouts/MainLayout";
 import { fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
 import { delay } from "~helpers/utils";
-
 
 type SuccessProps = {
   form: Form;
@@ -51,33 +37,6 @@ const Success = ({ form }: SuccessProps) => (
   </Alert>
 );
 
-type ErrorAlertProps = {
-  title: string;
-  message: string;
-  isOpen: boolean;
-  onClose: () => void;
-};
-
-const ErrorAlert = ({ title, message, isOpen, onClose }: ErrorAlertProps) => {
-  const ref = useRef<HTMLButtonElement>(null);
-
-  return (
-    <AlertDialog leastDestructiveRef={ref} onClose={onClose} isOpen={isOpen} isCentered>
-      <AlertDialogOverlay />
-      <AlertDialogContent>
-        <AlertDialogHeader>{title}</AlertDialogHeader>
-        <AlertDialogCloseButton />
-        <AlertDialogBody>{message}</AlertDialogBody>
-        <AlertDialogFooter>
-          <Button colorScheme="red" ref={ref} onClick={onClose}>
-            Close
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-};
-
 type FormPageProps = {
   form: Form;
   user: User;
@@ -97,8 +56,8 @@ const FormContent = ({ form, previous }: FormPageProps) => {
         body: JSON.stringify(values),
       });
       setSuccess(true);
-    } catch (_e) {
-      setError(_e as Error);
+    } catch (e) {
+      setError(e as Error);
     }
   };
 
@@ -109,12 +68,7 @@ const FormContent = ({ form, previous }: FormPageProps) => {
   return (
     <>
       <FormiumForm data={form} components={components} onSubmit={handleSubmit} />
-      <ErrorAlert
-        isOpen={!!error}
-        title="Error"
-        message={error?.message ?? ""}
-        onClose={() => setError(undefined)}
-      />
+      <ErrorAlert error={error} setError={setError} />
     </>
   );
 };
