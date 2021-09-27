@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AlertIcon, AlertTitle, Box } from "@chakra-ui/react";
+import { Alert, AlertDescription, AlertIcon, AlertStatus, AlertTitle, Box } from "@chakra-ui/react";
 import { FormiumForm } from "@formium/react";
 import { Form } from "@formium/types";
 import React, { useState } from "react";
@@ -10,41 +10,62 @@ import MainLayout from "~components/layouts/MainLayout";
 import { fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { User } from "~helpers/types";
+import { SubmissionStatus, User } from "~helpers/types";
 import { delay } from "~helpers/utils";
+
+const ALERT_STATUS: {
+  [key in SubmissionStatus]: [AlertStatus, (form: Form) => string, (form: Form) => string];
+} = {
+  [SubmissionStatus.REVIEW]: [
+    "info",
+    () => "Submitted",
+    (form) =>
+      `Your ${form.name} has been submitted and is under review. We will get back to you soon.`,
+  ],
+  [SubmissionStatus.ACCEPTED]: [
+    "success",
+    () => "Accepted",
+    (form) => `Your ${form.name} has been accepted.`,
+  ],
+  [SubmissionStatus.REJECTED]: [
+    "error",
+    () => "Rejected",
+    (form) =>
+      `Sorry, your ${form.name} has been rejected. Please do not contact staff members for details.`,
+  ],
+};
 
 type SuccessProps = {
   form: Form;
+  status: SubmissionStatus;
 };
 
-const Success = ({ form }: SuccessProps) => (
+const Success = ({ form, status }: SuccessProps) => (
   <Alert
     maxW="3xl"
     mx="auto"
     p="8"
-    status="info"
+    status={ALERT_STATUS[status][0]}
     flexDirection="column"
     textAlign="center"
     rounded="lg"
   >
     <AlertIcon boxSize="40px" mr={0} />
     <AlertTitle mt={4} mb={1} fontSize="lg">
-      {form.name} Submitted
+      {ALERT_STATUS[status][1](form)}
     </AlertTitle>
-    <AlertDescription maxW="sm">
-      Your {form.name} has been submitted and is under review. Our team will get back to you soon.
-    </AlertDescription>
+    <AlertDescription maxW="sm">{ALERT_STATUS[status][2](form)}</AlertDescription>
   </Alert>
 );
 
 type FormPageProps = {
   form: Form;
   user: User;
-  previous: boolean;
+  previous: SubmissionStatus | null;
 };
 
 const FormContent = ({ form, previous }: FormPageProps) => {
-  const [success, setSuccess] = useState(false);
+  const [status, setStatus] = useState(previous);
   const [error, setError] = useState<Error | undefined>();
 
   const handleSubmit = async (values: any) => {
@@ -55,14 +76,14 @@ const FormContent = ({ form, previous }: FormPageProps) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      setSuccess(true);
+      setStatus(SubmissionStatus.REVIEW);
     } catch (e) {
       setError(e as Error);
     }
   };
 
-  if (success || previous) {
-    return <Success form={form} />;
+  if (status !== null) {
+    return <Success form={form} status={status} />;
   }
 
   return (
@@ -104,12 +125,13 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
 
   const _submissions = await fetchSubmissions(form.slug, user.id);
   const submissions = await _submissions.limit(1).toArray();
+  const previous = submissions.length > 0 ? submissions[0].status ?? SubmissionStatus.REVIEW : null;
 
   return {
     props: {
       form,
       user,
-      previous: submissions.length > 0,
+      previous,
     },
   };
 }, AuthMode.AUTHENTICATED);
