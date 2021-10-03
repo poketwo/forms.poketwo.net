@@ -18,18 +18,18 @@ const ALERT_STATUS: {
 } = {
   [SubmissionStatus.REVIEW]: [
     "info",
-    () => "Submitted",
+    (form) => `${form.name} Submitted`,
     (form) =>
       `Your ${form.name} has been submitted and is under review. We will get back to you soon.`,
   ],
   [SubmissionStatus.ACCEPTED]: [
     "success",
-    () => "Accepted",
+    (form) => `${form.name} Accepted`,
     (form) => `Your ${form.name} has been accepted.`,
   ],
   [SubmissionStatus.REJECTED]: [
     "error",
-    () => "Rejected",
+    (form) => `${form.name} Rejected`,
     (form) =>
       `Sorry, your ${form.name} has been rejected. Please do not contact staff members for details.`,
   ],
