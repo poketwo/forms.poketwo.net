@@ -127,7 +127,11 @@ const Navigation = () => (
       label="Moderator Application"
     />
     <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Server Ban Appeal" />
-    <NavItem href="/a/suspension-appeal" icon={<HiBan />} label="Bot Suspension Appeal" />
+    <NavItem
+      href="/a/suspension-appeal"
+      icon={<HiShieldExclamation />}
+      label="Bot Suspension Appeal"
+    />
   </Stack>
 );
 
