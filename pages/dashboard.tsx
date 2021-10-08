@@ -8,7 +8,7 @@ import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
 
-const FORMS = ["moderator-application", "ban-appeal"];
+const FORMS = ["moderator-application", "ban-appeal", "suspension-appeal"];
 
 type FormCardProps = {
   form: Form;
