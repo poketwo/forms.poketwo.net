@@ -44,9 +44,10 @@ export enum Position {
 }
 
 export enum SubmissionStatus {
-  REVIEW = 0,
+  UNDER_REVIEW = 0,
   REJECTED = 1,
   ACCEPTED = 2,
+  MARKED = 3,
 }
 
 export type Submission<T = any> = {

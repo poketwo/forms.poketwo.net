@@ -16,7 +16,7 @@ import { delay } from "~helpers/utils";
 const ALERT_STATUS: {
   [key in SubmissionStatus]: [AlertStatus, (form: Form) => string, (form: Form) => string];
 } = {
-  [SubmissionStatus.REVIEW]: [
+  [SubmissionStatus.UNDER_REVIEW]: [
     "info",
     (form) => `${form.name} Submitted`,
     (form) =>
@@ -32,6 +32,12 @@ const ALERT_STATUS: {
     (form) => `${form.name} Rejected`,
     (form) =>
       `Sorry, your ${form.name} has been rejected. Please do not contact staff members for details.`,
+  ],
+  [SubmissionStatus.MARKED]: [
+    "info",
+    (form) => `${form.name} Submitted`,
+    (form) =>
+      `Your ${form.name} has been submitted and is under review. We will get back to you soon.`,
   ],
 };
 
@@ -76,7 +82,7 @@ const FormContent = ({ form, previous }: FormPageProps) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      setStatus(SubmissionStatus.REVIEW);
+      setStatus(SubmissionStatus.UNDER_REVIEW);
     } catch (e) {
       setError(e as Error);
     }
@@ -125,7 +131,8 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
 
   const _submissions = await fetchSubmissions(form.slug, user.id);
   const submissions = await _submissions.limit(1).toArray();
-  const previous = submissions.length > 0 ? submissions[0].status ?? SubmissionStatus.REVIEW : null;
+  const previous =
+    submissions.length > 0 ? submissions[0].status ?? SubmissionStatus.UNDER_REVIEW : null;
 
   return {
     props: {

@@ -1,9 +1,8 @@
-import { Button } from "@chakra-ui/button";
+import { Button, ButtonProps } from "@chakra-ui/button";
 import { Box, Code, Divider, Flex, Heading, HStack, Stack, Text } from "@chakra-ui/layout";
-import { ThemeTypings } from "@chakra-ui/styled-system";
 import { chakra } from "@chakra-ui/system";
 import { Form } from "@formium/types";
-import { ReactElement, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import { HiCheck, HiX } from "react-icons/hi";
 
 import ErrorAlert from "~components/formium/ErrorAlert";
@@ -20,14 +19,13 @@ import {
 } from "~helpers/types";
 import { delay } from "~helpers/utils";
 
-type HeaderButtonProps = {
-  colorScheme: ThemeTypings["colorSchemes"];
+type HeaderButtonProps = ButtonProps & {
   icon: ReactElement;
   label: string;
   onClick: () => void;
 };
 
-const HeaderButton = ({ colorScheme, icon, label, onClick }: HeaderButtonProps) => {
+const HeaderButton = ({ icon, label, onClick, ...props }: HeaderButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | undefined>();
 
@@ -44,13 +42,7 @@ const HeaderButton = ({ colorScheme, icon, label, onClick }: HeaderButtonProps) 
 
   return (
     <>
-      <Button
-        size="sm"
-        colorScheme={colorScheme}
-        leftIcon={icon}
-        onClick={handleClick}
-        isLoading={loading}
-      >
+      <Button size="sm" leftIcon={icon} onClick={handleClick} isLoading={loading} {...props}>
         {label}
       </Button>
       <ErrorAlert error={error} setError={setError} />
@@ -80,12 +72,21 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
 
       <HeaderButton
         colorScheme="green"
+        isDisabled={submission.status === SubmissionStatus.ACCEPTED}
         icon={<HiCheck />}
         label="Accept"
         onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
       />
       <HeaderButton
+        colorScheme="blue"
+        isDisabled={submission.status === SubmissionStatus.MARKED}
+        icon={<HiX />}
+        label="Mark for Review"
+        onClick={() => onSetStatus(SubmissionStatus.MARKED)}
+      />
+      <HeaderButton
         colorScheme="red"
+        isDisabled={submission.status === SubmissionStatus.REJECTED}
         icon={<HiX />}
         label="Reject"
         onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
@@ -149,6 +150,12 @@ type SubmissionPageProps = {
 };
 
 const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageProps) => {
+  const [subs, setSubs] = useState(submissions);
+  const [sub, setSub] = useState(submission);
+
+  useEffect(() => setSubs(submissions), [submissions]);
+  useEffect(() => setSub(submission), [submission]);
+
   const handleSetStatus = async (status: SubmissionStatus) => {
     const resp = await fetch(`/api/forms/${form.slug}/submissions/${submission._id}`, {
       method: "PATCH",
@@ -156,21 +163,27 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
       body: JSON.stringify({ status }),
     });
     if (!resp.ok) throw new Error(await resp.text());
+
+    const listSub = submissions.find((x) => x._id === sub._id);
+    if (listSub) listSub.status = status;
+    setSub({ ...sub, status });
+    setSubs(submissions);
   };
 
   return (
     <SubmissionsLayout
       user={user}
       form={form}
-      submissions={submissions}
+      submissions={subs}
+      submission={submission}
       contentContainerProps={{ p: 0 }}
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="3" shadow="base">
-          <SubmissionHeader submission={submission} onSetStatus={handleSetStatus} />
+          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
         </Box>
         <Box flex="1" overflow="scroll" p="6">
-          <SubmissionContent key={form.id} form={form} submission={submission} />
+          <SubmissionContent key={form.id} form={form} submission={sub} />
         </Box>
       </Flex>
     </SubmissionsLayout>
