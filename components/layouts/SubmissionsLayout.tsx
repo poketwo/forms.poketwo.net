@@ -84,7 +84,7 @@ const SubmissionsLayout = ({
   );
 
   useEffect(() => {
-    ref.current?.scrollIntoView();
+    ref.current?.scrollIntoView({ block: "center" });
   }, [submission]);
 
   return (
