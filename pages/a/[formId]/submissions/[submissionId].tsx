@@ -232,5 +232,5 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     };
   },
   AuthMode.AUTHENTICATED,
-  Position.ADMIN
+  Position.COMMUNITY_MANAGER
 );

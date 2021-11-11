@@ -19,4 +19,4 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   res.status(204).end();
 };
 
-export default withSession(handler, AuthMode.AUTHENTICATED, Position.ADMIN);
+export default withSession(handler, AuthMode.AUTHENTICATED, Position.COMMUNITY_MANAGER);

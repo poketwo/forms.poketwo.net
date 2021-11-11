@@ -40,7 +40,8 @@ export enum Position {
   MEMBER = 0,
   HELPER = 1,
   MODERATOR = 2,
-  ADMIN = 3,
+  COMMUNITY_MANAGER = 3,
+  ADMIN = 4,
 }
 
 export enum SubmissionStatus {

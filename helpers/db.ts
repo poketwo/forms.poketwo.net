@@ -31,7 +31,8 @@ const wrapCache = <T extends (id: string) => Promise<any>>(key: string, func: T)
 };
 
 const ROLES: [Position, string[]][] = [
-  [Position.ADMIN, ["718006431231508481"]],
+  [Position.ADMIN, ["908088852567187467"]],
+  [Position.COMMUNITY_MANAGER, ["718006431231508481"]],
   [Position.MODERATOR, ["724879492622843944", "813433839471820810"]],
   [Position.HELPER, ["732712709514199110", "794438698241884200"]],
 ];
