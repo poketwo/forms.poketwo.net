@@ -41,7 +41,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
             <Box flex="1">
               <Text fontWeight="bold">{submission.user_tag}</Text>
               <Text color="gray.500" isTruncated>
-                {submission.email}
+                {submission.user_id}
               </Text>
             </Box>
 
