@@ -15,7 +15,7 @@ import {
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
 import { PropsWithChildren } from "react";
-import { HiBan, HiHome, HiLogout, HiSelector, HiShieldExclamation } from "react-icons/hi";
+import { HiClipboardList, HiHome, HiLogout, HiSelector } from "react-icons/hi";
 
 import { User } from "~helpers/types";
 
@@ -121,29 +121,14 @@ const NavItem = ({ href, subtle = false, icon, label }: NavItemProps) => {
 const Navigation = () => (
   <Stack spacing="1">
     <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
+    <NavItem href="/a/helper-application" icon={<HiClipboardList />} label="Helper Application" />
     <NavItem
       href="/a/moderator-application"
-      icon={<HiShieldExclamation />}
+      icon={<HiClipboardList />}
       label="Moderator Application"
     />
-    <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Server Ban Appeal" />
-    <NavItem
-      href="/a/suspension-appeal"
-      icon={<HiShieldExclamation />}
-      label="Bot Suspension Appeal"
-    />
-  </Stack>
-);
-
-const AdminNavigation = () => (
-  <Stack spacing="1">
-    <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
-    <NavItem
-      href="/a/moderator-application"
-      icon={<HiShieldExclamation />}
-      label="Moderator Application"
-    />
-    <NavItem href="/a/ban-appeal" icon={<HiBan />} label="Server Ban Appeal" />
+    <NavItem href="/a/ban-appeal" icon={<HiClipboardList />} label="Server Ban Appeal" />
+    <NavItem href="/a/suspension-appeal" icon={<HiClipboardList />} label="Bot Suspension Appeal" />
   </Stack>
 );
 
