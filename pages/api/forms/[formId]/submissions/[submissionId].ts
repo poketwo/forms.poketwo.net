@@ -1,3 +1,4 @@
+import { Long } from "mongodb";
 import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
@@ -14,7 +15,9 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const user = req.session.get<User>("user");
   if (!user) return res.status(401);
 
-  await updateSubmission(submissionId, { $set: { status: req.body.status } });
+  await updateSubmission(submissionId, {
+    $set: { status: req.body.status, reviewer_id: Long.fromString(user.id) },
+  });
 
   res.status(204).end();
 };
