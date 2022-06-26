@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertIcon, AlertStatus, AlertTitle, Box } from "@chakra-ui/react";
 import { FormiumForm } from "@formium/react";
 import { Form } from "@formium/types";
-import React, { useState } from "react";
+import { useState } from "react";
 import NoSSR from "react-no-ssr";
 
 import components from "~components/formium";
@@ -103,6 +103,7 @@ const FormContent = ({ form, previous }: FormPageProps) => {
 const FormPage = (props: FormPageProps) => (
   <MainLayout user={props.user}>
     <Box maxW="3xl" mx="auto">
+      {/* @ts-ignore */}
       <NoSSR>
         <FormContent key={props.form.id} {...props} />
       </NoSSR>

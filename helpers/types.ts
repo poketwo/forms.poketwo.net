@@ -59,7 +59,7 @@ export type Submission<T = any> = {
   email: string | null;
   data: T;
   status?: SubmissionStatus;
-  embedded_id: Long;
+  embedded_id?: Long;
 };
 
 export type SerializableSubmission<T = any> = {
