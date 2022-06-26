@@ -81,4 +81,5 @@ export const makeSerializable = <T = any>(
   user_tag: submission.user_tag,
   email: submission.email,
   data: submission.data,
+  status: submission.status,
 });
