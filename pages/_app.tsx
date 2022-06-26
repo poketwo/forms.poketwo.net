@@ -26,6 +26,7 @@ const MyApp = ({ Component, pageProps }: AppProps) => (
       <title>Pokétwo Forms Site</title>
     </Head>
 
+    {/* @ts-ignore */}
     <NextNprogress
       color="#29D"
       startPosition={0.3}
@@ -35,6 +36,7 @@ const MyApp = ({ Component, pageProps }: AppProps) => (
     />
 
     <ChakraProvider theme={theme}>
+      {/* @ts-ignore */}
       <Component {...pageProps} />
     </ChakraProvider>
   </>
