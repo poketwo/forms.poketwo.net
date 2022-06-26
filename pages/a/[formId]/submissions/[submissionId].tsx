@@ -1,9 +1,20 @@
-import { Button, ButtonProps } from "@chakra-ui/button";
-import { Box, Code, Divider, Flex, Heading, HStack, Stack, Text } from "@chakra-ui/layout";
-import { chakra } from "@chakra-ui/system";
+import {
+  Box,
+  Button,
+  ButtonProps,
+  chakra,
+  Code,
+  Divider,
+  Flex,
+  Heading,
+  HStack,
+  IconButton,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { Form } from "@formium/types";
 import { ReactElement, useEffect, useState } from "react";
-import { HiCheck, HiX } from "react-icons/hi";
+import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
@@ -42,9 +53,25 @@ const HeaderButton = ({ icon, label, onClick, ...props }: HeaderButtonProps) => 
 
   return (
     <>
-      <Button size="sm" leftIcon={icon} onClick={handleClick} isLoading={loading} {...props}>
+      <Button
+        display={{ base: "none", lg: "flex" }}
+        size="sm"
+        leftIcon={icon}
+        onClick={handleClick}
+        isLoading={loading}
+        {...props}
+      >
         {label}
       </Button>
+      <IconButton
+        display={{ base: "flex", lg: "none" }}
+        aria-label={label}
+        size="lg"
+        icon={icon}
+        onClick={handleClick}
+        isLoading={loading}
+        {...props}
+      />
       <ErrorAlert error={error} setError={setError} />
     </>
   );
@@ -59,16 +86,24 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
   const [name, discrim] = submission.user_tag.split("#", 2);
 
   return (
-    <HStack>
-      <Heading size="md">
-        {name}
-        <chakra.span color="gray.500" fontWeight="medium">
-          #{discrim}
-        </chakra.span>
-      </Heading>
-      <Text flex="1" fontSize="sm" color="gray.500">
-        {submission.user_id}
-      </Text>
+    <HStack spacing={2}>
+      <Stack
+        flex="1"
+        spacing={{ base: 0, lg: 2 }}
+        direction={{ base: "column", lg: "row" }}
+        alignItems={{ base: "flex-start", lg: "center" }}
+      >
+        <Heading size="md">
+          {name}
+          <chakra.span color="gray.500" fontWeight="medium">
+            #{discrim}
+          </chakra.span>
+        </Heading>
+
+        <Text flex="1" fontSize="sm" color="gray.500">
+          {submission.user_id}
+        </Text>
+      </Stack>
 
       <HeaderButton
         colorScheme="green"
@@ -80,7 +115,7 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
       <HeaderButton
         colorScheme="blue"
         isDisabled={submission.status === SubmissionStatus.MARKED}
-        icon={<HiX />}
+        icon={<HiFlag />}
         label="Mark for Review"
         onClick={() => onSetStatus(SubmissionStatus.MARKED)}
       />
@@ -179,7 +214,7 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
       contentContainerProps={{ p: 0 }}
     >
       <Flex direction="column" h="full" overflow="hidden">
-        <Box px="6" py="3" shadow="base">
+        <Box px="6" py="4" shadow="base">
           <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
         </Box>
         <Box flex="1" overflow="scroll" p="6">

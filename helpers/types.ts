@@ -59,6 +59,7 @@ export type Submission<T = any> = {
   email: string | null;
   data: T;
   status?: SubmissionStatus;
+  embedded_id: Long;
 };
 
 export type SerializableSubmission<T = any> = {
@@ -74,8 +75,10 @@ export type SerializableSubmission<T = any> = {
 export const makeSerializable = <T = any>(
   submission: Submission<T>
 ): SerializableSubmission<T> => ({
-  ...submission,
   _id: submission._id.toString(),
   form_id: submission.form_id.toString(),
   user_id: submission.user_id.toString(),
+  user_tag: submission.user_tag,
+  email: submission.email,
+  data: submission.data,
 });

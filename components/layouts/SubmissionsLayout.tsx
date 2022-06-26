@@ -1,4 +1,22 @@
-import { Box, Divider, Flex, Heading, HStack, Icon, Stack, Text } from "@chakra-ui/react";
+import { HamburgerIcon } from "@chakra-ui/icons";
+import {
+  Box,
+  Divider,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
+  Flex,
+  Heading,
+  HStack,
+  Icon,
+  IconButton,
+  Stack,
+  Text,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { Form } from "@formium/types";
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
@@ -87,10 +105,48 @@ const SubmissionsLayout = ({
     ref.current?.scrollIntoView({ block: "center" });
   }, [submission]);
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
     <MainLayout user={user} contentContainerProps={{ p: "0", overflow: "hidden" }}>
+      <HStack h="12" px="6" shadow="base" display={{ base: "flex", lg: "none" }}>
+        <IconButton
+          aria-label="Toggle navigation"
+          variant="ghost"
+          icon={<HamburgerIcon boxSize={6} />}
+          onClick={onOpen}
+        />
+        <Heading size="sm">{form.name}</Heading>
+      </HStack>
+
       <Flex h="full">
-        <Stack spacing="0" divider={<Divider />} w="96" shadow="base" overflow="scroll">
+        <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
+          <DrawerOverlay />
+          <DrawerContent>
+            <DrawerCloseButton />
+            <DrawerHeader>{form.name}</DrawerHeader>
+            <DrawerBody px="0">
+              <Stack h="full" spacing="0" divider={<Divider />}>
+                {sorted.map((x) => (
+                  <SubmissionItem
+                    key={x._id}
+                    submission={x}
+                    ref={x._id === submission?._id ? ref : undefined}
+                  />
+                ))}
+              </Stack>
+            </DrawerBody>
+          </DrawerContent>
+        </Drawer>
+
+        <Stack
+          spacing="0"
+          divider={<Divider />}
+          w="96"
+          shadow="base"
+          overflow="scroll"
+          display={{ base: "none", lg: "flex" }}
+        >
           <Heading m="6" size="md">
             {form.name}
           </Heading>
@@ -104,7 +160,7 @@ const SubmissionsLayout = ({
           ))}
         </Stack>
 
-        <Box flex="1" bg="white" p="6" overflow="scroll" {...contentContainerProps}>
+        <Box flex="1" p="6" overflow="scroll" {...contentContainerProps}>
           {children}
         </Box>
       </Flex>

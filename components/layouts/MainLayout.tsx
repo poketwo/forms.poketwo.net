@@ -1,15 +1,25 @@
+import { HamburgerIcon } from "@chakra-ui/icons";
 import {
   Box,
   BoxProps,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
   Flex,
   FlexProps,
+  Heading,
   HStack,
+  IconButton,
   Img,
   Menu,
   MenuItem,
   MenuList,
   Stack,
   useColorModeValue,
+  useDisclosure,
   useMenuButton,
 } from "@chakra-ui/react";
 import { useRouter } from "next/dist/client/router";
@@ -138,18 +148,47 @@ export type MainLayoutProps = PropsWithChildren<{
 }>;
 
 const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutProps) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
     <Box height="100vh" overflow="hidden" position="relative">
-      <Flex h="full">
+      <HStack h="12" px="6" shadow="base" display={{ base: "flex", lg: "none" }}>
+        <IconButton
+          aria-label="Toggle navigation"
+          variant="ghost"
+          icon={<HamburgerIcon boxSize={6} />}
+          onClick={onOpen}
+        />
+        <Heading size="sm">Pokétwo Forms Site</Heading>
+      </HStack>
+
+      <Flex flex="1" h="full">
+        <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
+          <DrawerOverlay />
+          <DrawerContent bg="gray.900" color="white">
+            <DrawerCloseButton />
+            <DrawerHeader>Pokétwo Forms Site</DrawerHeader>
+            <DrawerBody>
+              <Stack h="full" spacing="4">
+                <Profile user={user} />
+                <Stack spacing="4" flex="1">
+                  <Navigation />
+                </Stack>
+                <NavItem href="/api/logout" icon={<HiLogout />} label="Sign Out" />
+              </Stack>
+            </DrawerBody>
+          </DrawerContent>
+        </Drawer>
+
         <Stack
           spacing="4"
-          direction="column"
           p="4"
           w="64"
           bg="gray.900"
           color="white"
           fontSize="sm"
           overflow="scroll"
+          display={{ base: "none", lg: "flex" }}
         >
           <Profile user={user} />
 
@@ -160,7 +199,7 @@ const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutPr
           <NavItem href="/api/logout" icon={<HiLogout />} label="Sign Out" />
         </Stack>
 
-        <Box flex="1" bg="white" p="8" overflow="scroll" {...contentContainerProps}>
+        <Box flex="1" p="8" overflow="scroll" {...contentContainerProps}>
           {children}
         </Box>
       </Flex>
