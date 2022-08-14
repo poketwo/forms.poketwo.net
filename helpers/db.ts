@@ -87,17 +87,41 @@ export const updateSubmission = async <T = any>(
   return collection.updateOne({ _id: ObjectId.createFromHexString(id) }, update);
 };
 
-export const fetchSubmissions = async <T = any>(formId: string, userId?: string) => {
+type FetchSubmissionsOptions = {
+  userId?: string;
+  page?: number;
+  onlyRecent?: boolean;
+};
+
+export const fetchSubmissions = async <T = any>(
+  formId: string,
+  options?: FetchSubmissionsOptions
+) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
   let query: any = { form_id: formId };
-  if (userId)
+
+  if (options?.userId) {
+    query = {
+      ...query,
+      user_id: Long.fromString(options.userId),
+    };
+  }
+
+  if (options?.onlyRecent) {
     query = {
       ...query,
       _id: { $gt: ObjectId.createFromTime(getUnixTime(sub(new Date(), { months: 3 }))) },
-      user_id: Long.fromString(userId),
     };
-  return collection.find<Submission<T>>(query).sort({ _id: -1 });
+  }
+
+  let cursor = collection.find<Submission<T>>(query).sort({ _id: -1 });
+
+  if (options?.page) {
+    cursor = cursor.limit(100).skip(100 * (options.page - 1));
+  }
+
+  return cursor;
 };
 
 export const createSubmission = async <T = any>(submission: Omit<Submission<T>, "_id">) => {

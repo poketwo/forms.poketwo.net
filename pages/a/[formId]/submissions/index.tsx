@@ -29,7 +29,7 @@ const SubmissionsPage = ({ user, form, submissions }: SubmissionsPageProps) => {
 export default SubmissionsPage;
 
 export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
-  async ({ req, params }) => {
+  async ({ req, params, query }) => {
     const id = params?.formId?.toString();
     const user = req.session.get<User>("user");
 
@@ -46,7 +46,10 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.slug);
+    const _submissions = await fetchSubmissions(form.slug, {
+      page: Number(query.page ?? 1),
+      userId: query.userId?.toString(),
+    });
     const submissions = await _submissions.toArray();
 
     return {

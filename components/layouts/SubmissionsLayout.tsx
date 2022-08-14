@@ -13,6 +13,7 @@ import {
   HStack,
   Icon,
   IconButton,
+  Input,
   Stack,
   Text,
   useDisclosure,
@@ -21,7 +22,7 @@ import { Form } from "@formium/types";
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
 import { forwardRef, useEffect, useMemo, useRef } from "react";
-import { HiCheck, HiFlag, HiX } from "react-icons/hi";
+import { HiCheck, HiChevronLeft, HiChevronRight, HiFlag, HiSearch, HiX } from "react-icons/hi";
 
 import MainLayout, { MainLayoutProps } from "./MainLayout";
 
@@ -41,9 +42,9 @@ type SubmissionItemProps = {
 const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
   ({ submission }: SubmissionItemProps, ref) => {
     const { query, asPath } = useRouter();
-    const { formId } = query;
+    const page = Number(query.page ?? 1);
 
-    const href = `/a/${formId}/submissions/${submission._id}`;
+    const href = `/a/${query.formId}/submissions/${submission._id}?page=${page}`;
 
     return (
       <Link href={href}>
@@ -89,6 +90,10 @@ const SubmissionsLayout = ({
   contentContainerProps,
   children,
 }: SubmissionsLayoutProps) => {
+  const { query } = useRouter();
+  const page = Number(query.page ?? 1);
+  const href = `/a/${query.formId}/submissions`;
+
   const ref = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(
@@ -147,9 +152,22 @@ const SubmissionsLayout = ({
           overflow="scroll"
           display={{ base: "none", lg: "flex" }}
         >
-          <Heading m="6" size="md">
-            {form.name}
-          </Heading>
+          <Stack py="4" spacing="4">
+            <Link href={href} passHref>
+              <Heading as="a" mx="6" size="md">
+                {form.name}
+              </Heading>
+            </Link>
+            <HStack as="form" px="6">
+              <Input
+                name="userId"
+                defaultValue={query.userId}
+                size="sm"
+                placeholder="Enter User ID"
+              />
+              <IconButton aria-label="Search" icon={<HiSearch />} size="sm" />
+            </HStack>
+          </Stack>
 
           {sorted.map((x) => (
             <SubmissionItem
@@ -158,6 +176,31 @@ const SubmissionsLayout = ({
               ref={x._id === submission?._id ? ref : undefined}
             />
           ))}
+
+          <HStack>
+            <Link href={page > 1 ? `${href}?page=${page - 1}` : "#"} passHref>
+              <IconButton
+                as="a"
+                flex="1"
+                borderRadius="0"
+                variant="ghost"
+                aria-label="Previous page"
+                icon={<HiChevronLeft />}
+                disabled={page <= 1}
+              />
+            </Link>
+            <Link href={sorted.length >= 100 ? `${href}?page=${page + 1}` : "#"} passHref>
+              <IconButton
+                as="a"
+                flex="1"
+                borderRadius="0"
+                variant="ghost"
+                aria-label="Next page"
+                icon={<HiChevronRight />}
+                disabled={sorted.length < 100}
+              />
+            </Link>
+          </HStack>
         </Stack>
 
         <Box flex="1" p="6" overflow="scroll" {...contentContainerProps}>

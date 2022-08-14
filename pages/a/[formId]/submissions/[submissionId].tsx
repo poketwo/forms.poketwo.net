@@ -233,7 +233,7 @@ type SubmissionPageQuery = {
 };
 
 export const getServerSideProps = withServerSideSession<SubmissionPageProps, SubmissionPageQuery>(
-  async ({ req, params }) => {
+  async ({ req, params, query }) => {
     const user = req.session.get<User>("user");
     if (!params) throw new Error("No params found.");
     if (!user) throw new Error("User not found");
@@ -250,7 +250,10 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.slug);
+    const _submissions = await fetchSubmissions(form.slug, {
+      page: Number(query.page ?? 1),
+      userId: query.userId?.toString(),
+    });
     const submissions = await _submissions.toArray();
     const submission = await fetchSubmission(submissionId);
 

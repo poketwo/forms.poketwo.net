@@ -130,7 +130,7 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
 
   if (!form) return { notFound: true };
 
-  const _submissions = await fetchSubmissions(form.slug, user.id);
+  const _submissions = await fetchSubmissions(form.slug, { userId: user.id, onlyRecent: true });
   const submissions = await _submissions.limit(1).toArray();
   const previous =
     submissions.length > 0 ? submissions[0].status ?? SubmissionStatus.UNDER_REVIEW : null;

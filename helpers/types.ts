@@ -69,7 +69,7 @@ export type SerializableSubmission<T = any> = {
   user_tag: string;
   email: string | null;
   data: T;
-  status?: SubmissionStatus;
+  status: SubmissionStatus | null;
 };
 
 export const makeSerializable = <T = any>(
@@ -81,5 +81,5 @@ export const makeSerializable = <T = any>(
   user_tag: submission.user_tag,
   email: submission.email,
   data: submission.data,
-  status: submission.status,
+  status: submission.status ?? null,
 });
