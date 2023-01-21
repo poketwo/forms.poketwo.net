@@ -152,7 +152,7 @@ const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutPr
 
   return (
     <Box height="100vh" overflow="hidden" position="relative">
-      <HStack h="12" px="6" shadow="base" display={{ base: "flex", lg: "none" }}>
+      <HStack h="12" px="6" shadow="base" display={{ base: "flex", xl: "none" }}>
         <IconButton
           aria-label="Toggle navigation"
           variant="ghost"
@@ -188,7 +188,7 @@ const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutPr
           color="white"
           fontSize="sm"
           overflow="scroll"
-          display={{ base: "none", lg: "flex" }}
+          display={{ base: "none", xl: "flex" }}
         >
           <Profile user={user} />
 
