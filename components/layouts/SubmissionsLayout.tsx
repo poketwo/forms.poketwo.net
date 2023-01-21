@@ -76,6 +76,39 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
   }
 );
 
+type PaginationProps = {
+  page: number;
+  href: string;
+  count: number;
+};
+
+const Pagination = ({ page, href, count }: PaginationProps) => (
+  <HStack>
+    <Link href={page > 1 ? `${href}?page=${page - 1}` : "#"} passHref>
+      <IconButton
+        as="a"
+        flex="1"
+        borderRadius="0"
+        variant="ghost"
+        aria-label="Previous page"
+        icon={<HiChevronLeft />}
+        disabled={page <= 1}
+      />
+    </Link>
+    <Link href={count >= 100 ? `${href}?page=${page + 1}` : "#"} passHref>
+      <IconButton
+        as="a"
+        flex="1"
+        borderRadius="0"
+        variant="ghost"
+        aria-label="Next page"
+        icon={<HiChevronRight />}
+        disabled={count < 100}
+      />
+    </Link>
+  </HStack>
+);
+
 type SubmissionsLayoutProps = MainLayoutProps & {
   form: Form;
   submissions: SerializableSubmission[];
@@ -139,6 +172,7 @@ const SubmissionsLayout = ({
                     ref={x._id === submission?._id ? ref : undefined}
                   />
                 ))}
+                <Pagination page={page} href={href} count={sorted.length} />
               </Stack>
             </DrawerBody>
           </DrawerContent>
@@ -177,30 +211,7 @@ const SubmissionsLayout = ({
             />
           ))}
 
-          <HStack>
-            <Link href={page > 1 ? `${href}?page=${page - 1}` : "#"} passHref>
-              <IconButton
-                as="a"
-                flex="1"
-                borderRadius="0"
-                variant="ghost"
-                aria-label="Previous page"
-                icon={<HiChevronLeft />}
-                disabled={page <= 1}
-              />
-            </Link>
-            <Link href={sorted.length >= 100 ? `${href}?page=${page + 1}` : "#"} passHref>
-              <IconButton
-                as="a"
-                flex="1"
-                borderRadius="0"
-                variant="ghost"
-                aria-label="Next page"
-                icon={<HiChevronRight />}
-                disabled={sorted.length < 100}
-              />
-            </Link>
-          </HStack>
+          <Pagination page={page} href={href} count={sorted.length} />
         </Stack>
 
         <Box flex="1" p="6" overflow="scroll" {...contentContainerProps}>
