@@ -61,9 +61,6 @@ const ProfileButton = ({ user }: ProfileButtonProps) => {
           <Box isTruncated fontWeight="semibold">
             {user.username}#{user.discriminator}
           </Box>
-          <Box fontSize="xs" color="gray.400">
-            {user.email ?? "No Email"}
-          </Box>
         </Box>
       </HStack>
       <Box fontSize="lg" color="gray.400">
