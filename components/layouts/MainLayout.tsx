@@ -12,12 +12,14 @@ import {
   FlexProps,
   Heading,
   HStack,
+  Icon,
   IconButton,
   Img,
   Menu,
   MenuItem,
   MenuList,
   Stack,
+  useColorMode,
   useColorModeValue,
   useDisclosure,
   useMenuButton,
@@ -25,7 +27,7 @@ import {
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
 import { PropsWithChildren } from "react";
-import { HiClipboardList, HiHome, HiLogout, HiSelector } from "react-icons/hi";
+import { HiClipboardList, HiHome, HiLogout, HiMoon, HiSelector, HiSun } from "react-icons/hi";
 
 import { User } from "~helpers/types";
 
@@ -146,10 +148,19 @@ export type MainLayoutProps = PropsWithChildren<{
 
 const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { colorMode, toggleColorMode } = useColorMode();
+  const shadow = useColorModeValue("base", "md");
 
   return (
     <Box height="100vh" overflow="hidden" position="relative">
-      <HStack h="12" px="6" shadow="base" display={{ base: "flex", xl: "none" }}>
+      <HStack
+        h="12"
+        px="6"
+        shadow={shadow}
+        display={{ base: "flex", xl: "none" }}
+        position="relative"
+        zIndex={3}
+      >
         <IconButton
           aria-label="Toggle navigation"
           variant="ghost"
@@ -185,6 +196,8 @@ const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutPr
           color="white"
           fontSize="sm"
           overflow="scroll"
+          shadow={shadow}
+          zIndex={3}
           display={{ base: "none", xl: "flex" }}
         >
           <Profile user={user} />
@@ -200,6 +213,18 @@ const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutPr
           {children}
         </Box>
       </Flex>
+
+      <IconButton
+        aria-label="Toggle color theme"
+        position="fixed"
+        bottom="4"
+        right="4"
+        variant="ghost"
+        rounded="full"
+        size="lg"
+        icon={colorMode === "light" ? <Icon as={HiMoon} /> : <Icon as={HiSun} />}
+        onClick={toggleColorMode}
+      />
     </Box>
   );
 };

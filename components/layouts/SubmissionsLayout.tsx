@@ -16,6 +16,7 @@ import {
   Input,
   Stack,
   Text,
+  useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
 import { Form } from "@formium/types";
@@ -45,6 +46,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
     const page = Number(query.page ?? 1);
 
     const href = `/a/${query.formId}/submissions/${submission._id}?page=${page}`;
+    const activeBg = useColorModeValue("gray.100", "gray.700");
 
     return (
       <Link href={href}>
@@ -53,8 +55,8 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
             px="6"
             py="1"
             transition="all 0.2s"
-            bg={asPath.startsWith(href) ? "gray.100" : undefined}
-            _hover={{ backgroundColor: "gray.100" }}
+            bg={asPath.startsWith(href) ? activeBg : undefined}
+            _hover={{ backgroundColor: activeBg }}
             ref={ref}
           >
             <Box flex="1">
@@ -144,10 +146,19 @@ const SubmissionsLayout = ({
   }, [submission]);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const bg = useColorModeValue("white", "gray.800");
+  const shadow = useColorModeValue("base", "md");
 
   return (
     <MainLayout user={user} contentContainerProps={{ p: "0", overflow: "hidden" }}>
-      <HStack h="12" px="6" shadow="base" display={{ base: "flex", lg: "none" }}>
+      <HStack
+        h="12"
+        px="6"
+        shadow={shadow}
+        display={{ base: "flex", lg: "none" }}
+        position="relative"
+        zIndex={3}
+      >
         <IconButton
           aria-label="Toggle navigation"
           variant="ghost"
@@ -182,8 +193,10 @@ const SubmissionsLayout = ({
           spacing="0"
           divider={<Divider />}
           w="96"
-          shadow="base"
+          shadow={shadow}
           overflow="scroll"
+          bg={bg}
+          zIndex={2}
           display={{ base: "none", lg: "flex" }}
         >
           <Stack py="4" spacing="4">

@@ -9,8 +9,10 @@ import {
   Heading,
   HStack,
   IconButton,
+  LightMode,
   Stack,
   Text,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { Form } from "@formium/types";
 import { ReactElement, useEffect, useState } from "react";
@@ -105,27 +107,29 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
         </Text>
       </Stack>
 
-      <HeaderButton
-        colorScheme="green"
-        isDisabled={submission.status === SubmissionStatus.ACCEPTED}
-        icon={<HiCheck />}
-        label="Accept"
-        onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
-      />
-      <HeaderButton
-        colorScheme="blue"
-        isDisabled={submission.status === SubmissionStatus.MARKED}
-        icon={<HiFlag />}
-        label="Mark for Review"
-        onClick={() => onSetStatus(SubmissionStatus.MARKED)}
-      />
-      <HeaderButton
-        colorScheme="red"
-        isDisabled={submission.status === SubmissionStatus.REJECTED}
-        icon={<HiX />}
-        label="Reject"
-        onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
-      />
+      <LightMode>
+        <HeaderButton
+          colorScheme="green"
+          isDisabled={submission.status === SubmissionStatus.ACCEPTED}
+          icon={<HiCheck />}
+          label="Accept"
+          onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
+        />
+        <HeaderButton
+          colorScheme="blue"
+          isDisabled={submission.status === SubmissionStatus.MARKED}
+          icon={<HiFlag />}
+          label="Mark for Review"
+          onClick={() => onSetStatus(SubmissionStatus.MARKED)}
+        />
+        <HeaderButton
+          colorScheme="red"
+          isDisabled={submission.status === SubmissionStatus.REJECTED}
+          icon={<HiX />}
+          label="Reject"
+          onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
+        />
+      </LightMode>
     </HStack>
   );
 };
@@ -143,11 +147,13 @@ const SubmissionContent = ({ form, submission }: SubmissionContentProps) => {
 
   const ownedFields = [...fieldNames.keys()].filter((x) => submission.data.hasOwnProperty(x));
   const otherFields = Object.keys(submission.data).filter((x) => !ownedFields.includes(x));
+  const bg = useColorModeValue("white", "gray.800");
+  const shadow = useColorModeValue("base", "md");
 
   return (
     <Stack spacing="4">
       {ownedFields.map((x) => (
-        <Stack key={x} shadow="base" rounded="md" p="4" alignItems="flex-start">
+        <Stack key={x} shadow={shadow} bg={bg} rounded="md" p="4" alignItems="flex-start">
           <Text
             fontWeight="bold"
             _after={{
@@ -187,6 +193,8 @@ type SubmissionPageProps = {
 const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
+  const bg = useColorModeValue("white", "gray.800");
+  const shadow = useColorModeValue("base", "md");
 
   useEffect(() => setSubs(submissions), [submissions]);
   useEffect(() => setSub(submission), [submission]);
@@ -214,10 +222,10 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
       contentContainerProps={{ p: 0 }}
     >
       <Flex direction="column" h="full" overflow="hidden">
-        <Box px="6" py="4" shadow="base">
+        <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
           <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
         </Box>
-        <Box flex="1" overflow="scroll" p="6">
+        <Box flex="1" overflow="scroll" p="6" zIndex={0}>
           <SubmissionContent key={form.id} form={form} submission={sub} />
         </Box>
       </Flex>

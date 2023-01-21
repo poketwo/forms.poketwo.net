@@ -1,4 +1,4 @@
-import { Heading, HStack, Icon, Stack, Text } from "@chakra-ui/react";
+import { Heading, HStack, Icon, Stack, Text, useColorModeValue } from "@chakra-ui/react";
 import { Form } from "@formium/types";
 import Link from "next/link";
 import { HiChevronRight } from "react-icons/hi";
@@ -14,18 +14,21 @@ type FormCardProps = {
   form: Form;
 };
 
-const FormCard = ({ form }: FormCardProps) => (
-  <Link href={`/a/${form.slug}`}>
-    <a>
-      <HStack shadow="base" rounded="md" p="4" transition="all 0.2s" _hover={{ shadow: "lg" }}>
-        <Text fontSize="md" flex="1">
-          {form.name}
-        </Text>
-        <Icon as={HiChevronRight} />
-      </HStack>
-    </a>
-  </Link>
-);
+const FormCard = ({ form }: FormCardProps) => {
+  const shadow = useColorModeValue("base", "md");
+  return (
+    <Link href={`/a/${form.slug}`}>
+      <a>
+        <HStack shadow={shadow} rounded="md" p="4" transition="all 0.2s" _hover={{ shadow: "lg" }}>
+          <Text fontSize="md" flex="1">
+            {form.name}
+          </Text>
+          <Icon as={HiChevronRight} />
+        </HStack>
+      </a>
+    </Link>
+  );
+};
 
 type DashboardProps = {
   user: User;

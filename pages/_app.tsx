@@ -1,4 +1,5 @@
 import { ChakraProvider, extendTheme } from "@chakra-ui/react";
+import { mode } from "@chakra-ui/theme-tools";
 import { AppProps } from "next/app";
 import Head from "next/head";
 import NextNprogress from "nextjs-progressbar";
@@ -17,6 +18,15 @@ const theme = extendTheme({
       800: "#353d91",
       900: "#2b3177",
     },
+  },
+  initialColorMode: "dark",
+  useSystemColorMode: false,
+  styles: {
+    global: (props) => ({
+      body: {
+        bg: mode("white", "gray.900")(props),
+      },
+    }),
   },
 });
 
