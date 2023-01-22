@@ -79,6 +79,24 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
   }
 );
 
+const FilterForm = () => {
+  const { query } = useRouter();
+  return (
+    <Stack as="form" px="6">
+      <Input name="userId" defaultValue={query.userId} size="sm" placeholder="Enter User ID" />
+      <HStack>
+        <Select name="status" defaultValue={query.status} size="sm" placeholder="Select Status">
+          <option value={SubmissionStatus.UNDER_REVIEW}>New</option>
+          <option value={SubmissionStatus.ACCEPTED}>Accepted</option>
+          <option value={SubmissionStatus.REJECTED}>Rejected</option>
+          <option value={SubmissionStatus.MARKED}>Marked for Review</option>
+        </Select>
+        <IconButton type="submit" aria-label="Search" icon={<HiSearch />} size="sm" />
+      </HStack>
+    </Stack>
+  );
+};
+
 type PaginationProps = {
   page: number;
   href: string;
@@ -176,15 +194,18 @@ const SubmissionsLayout = ({
             <DrawerCloseButton />
             <DrawerHeader>{form.name}</DrawerHeader>
             <DrawerBody px="0">
-              <Stack h="full" spacing="0" divider={<Divider />}>
-                {sorted.map((x) => (
-                  <SubmissionItem
-                    key={x._id}
-                    submission={x}
-                    ref={x._id === submission?._id ? ref : undefined}
-                  />
-                ))}
-                <Pagination page={page} href={href} count={sorted.length} />
+              <Stack spacing={4}>
+                <FilterForm />
+                <Stack h="full" spacing="0" divider={<Divider />}>
+                  {sorted.map((x) => (
+                    <SubmissionItem
+                      key={x._id}
+                      submission={x}
+                      ref={x._id === submission?._id ? ref : undefined}
+                    />
+                  ))}
+                  <Pagination page={page} href={href} count={sorted.length} />
+                </Stack>
               </Stack>
             </DrawerBody>
           </DrawerContent>
@@ -206,28 +227,7 @@ const SubmissionsLayout = ({
                 {form.name}
               </Heading>
             </Link>
-            <Stack as="form" px="6">
-              <Input
-                name="userId"
-                defaultValue={query.userId}
-                size="sm"
-                placeholder="Enter User ID"
-              />
-              <HStack>
-                <Select
-                  name="status"
-                  defaultValue={query.status}
-                  size="sm"
-                  placeholder="Select Status"
-                >
-                  <option value={SubmissionStatus.UNDER_REVIEW}>New</option>
-                  <option value={SubmissionStatus.ACCEPTED}>Accepted</option>
-                  <option value={SubmissionStatus.REJECTED}>Rejected</option>
-                  <option value={SubmissionStatus.MARKED}>Marked for Review</option>
-                </Select>
-                <IconButton type="submit" aria-label="Search" icon={<HiSearch />} size="sm" />
-              </HStack>
-            </Stack>
+            <FilterForm />
           </Stack>
 
           {sorted.map((x) => (
