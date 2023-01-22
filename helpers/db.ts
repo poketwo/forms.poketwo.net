@@ -91,7 +91,7 @@ type FetchSubmissionsOptions = {
   userId?: string;
   page?: number;
   onlyRecent?: boolean;
-  status?: SubmissionStatus;
+  status?: SubmissionStatus | object;
 };
 
 export const fetchSubmissions = async <T = any>(
@@ -100,12 +100,19 @@ export const fetchSubmissions = async <T = any>(
 ) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
-  let query: any = { form_id: formId, status: { $nin: [1, 2] } };
+  let query: any = { form_id: formId };
 
   if (options?.status) {
     query = {
       ...query,
       status: options.status,
+    };
+  }
+
+  if (options?.status === 0) {
+    query = {
+      ...query,
+      status: { $exists: false },
     };
   }
 

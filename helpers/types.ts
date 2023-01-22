@@ -60,6 +60,8 @@ export type Submission<T = any> = {
   data: T;
   status?: SubmissionStatus;
   embedded_id?: Long;
+  reviewer_id?: Long;
+  comment?: string;
 };
 
 export type SerializableSubmission<T = any> = {
@@ -70,6 +72,8 @@ export type SerializableSubmission<T = any> = {
   email: string | null;
   data: T;
   status: SubmissionStatus | null;
+  reviewer_id: string | null;
+  comment: string | null;
 };
 
 export const makeSerializable = <T = any>(
@@ -82,4 +86,6 @@ export const makeSerializable = <T = any>(
   email: submission.email,
   data: submission.data,
   status: submission.status ?? null,
+  reviewer_id: submission.reviewer_id?.toString() ?? null,
+  comment: submission.comment ?? null,
 });

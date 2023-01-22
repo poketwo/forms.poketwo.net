@@ -6,16 +6,27 @@ import {
   Code,
   Divider,
   Flex,
+  FormControl,
+  FormHelperText,
+  FormLabel,
   Heading,
   HStack,
   IconButton,
+  Input,
   LightMode,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Stack,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { Form } from "@formium/types";
-import { ReactElement, useEffect, useState } from "react";
+import { FormEvent, ReactElement, useEffect, useState } from "react";
 import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 
 import ErrorAlert from "~components/formium/ErrorAlert";
@@ -102,7 +113,7 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
           </chakra.span>
         </Heading>
 
-        <Text flex="1" fontSize="sm" color="gray.500">
+        <Text fontSize="sm" color="gray.500">
           {submission.user_id}
         </Text>
       </Stack>
@@ -183,6 +194,58 @@ const SubmissionContent = ({ form, submission }: SubmissionContentProps) => {
   );
 };
 
+type CommentModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (comment: string) => void;
+};
+
+const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
+  const [comment, setComment] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    await onSubmit(comment);
+    setIsLoading(false);
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Add Comment</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <form id="comment" onSubmit={handleSubmit}>
+            <FormControl>
+              <FormLabel>Comment</FormLabel>
+              <Input
+                name="comment"
+                placeholder="Enter comment..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                isRequired
+              />
+              <FormHelperText>This comment will be sent to the submitter.</FormHelperText>
+            </FormControl>
+          </form>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button variant="ghost" onClick={onClose} isLoading={isLoading}>
+            Cancel
+          </Button>
+          <Button form="comment" type="submit" colorScheme="blue" mr={3} isLoading={isLoading}>
+            Submit
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
+
 type SubmissionPageProps = {
   user: User;
   form: Form;
@@ -193,17 +256,19 @@ type SubmissionPageProps = {
 const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
+  const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
+
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
 
   useEffect(() => setSubs(submissions), [submissions]);
   useEffect(() => setSub(submission), [submission]);
 
-  const handleSetStatus = async (status: SubmissionStatus) => {
+  const updateStatus = async (status: SubmissionStatus, comment?: string) => {
     const resp = await fetch(`/api/forms/${form.slug}/submissions/${submission._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, comment }),
     });
     if (!resp.ok) throw new Error(await resp.text());
 
@@ -211,6 +276,20 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
     if (listSub) listSub.status = status;
     setSub({ ...sub, status });
     setSubs(submissions);
+  };
+
+  const handleSetStatus = async (status: SubmissionStatus) => {
+    if (status === SubmissionStatus.ACCEPTED || status === SubmissionStatus.REJECTED) {
+      setStatusWithComment(status);
+    } else {
+      await updateStatus(status);
+    }
+  };
+
+  const handleSubmit = async (comment: string) => {
+    if (!statusWithComment) return;
+    await updateStatus(statusWithComment, comment);
+    setStatusWithComment(undefined);
   };
 
   return (
@@ -229,6 +308,11 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
           <SubmissionContent key={form.id} form={form} submission={sub} />
         </Box>
       </Flex>
+      <CommentModal
+        isOpen={statusWithComment !== undefined}
+        onClose={() => setStatusWithComment(undefined)}
+        onSubmit={handleSubmit}
+      />
     </SubmissionsLayout>
   );
 };
@@ -261,7 +345,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     const _submissions = await fetchSubmissions(form.slug, {
       page: Number(query.page ?? 1),
       userId: query.userId?.toString(),
-      status: query.status ? Number(query.status) : undefined,
+      status: query.status ? Number(query.status) : { $nin: [1, 2] },
     });
     const submissions = await _submissions.toArray();
     const submission = await fetchSubmission(submissionId);
