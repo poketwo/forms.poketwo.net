@@ -14,6 +14,7 @@ import {
   Icon,
   IconButton,
   Input,
+  Select,
   Stack,
   Text,
   useColorModeValue,
@@ -205,15 +206,28 @@ const SubmissionsLayout = ({
                 {form.name}
               </Heading>
             </Link>
-            <HStack as="form" px="6">
+            <Stack as="form" px="6">
               <Input
                 name="userId"
                 defaultValue={query.userId}
                 size="sm"
                 placeholder="Enter User ID"
               />
-              <IconButton aria-label="Search" icon={<HiSearch />} size="sm" />
-            </HStack>
+              <HStack>
+                <Select
+                  name="status"
+                  defaultValue={query.status}
+                  size="sm"
+                  placeholder="Select Status"
+                >
+                  <option value={SubmissionStatus.UNDER_REVIEW}>New</option>
+                  <option value={SubmissionStatus.ACCEPTED}>Accepted</option>
+                  <option value={SubmissionStatus.REJECTED}>Rejected</option>
+                  <option value={SubmissionStatus.MARKED}>Marked for Review</option>
+                </Select>
+                <IconButton type="submit" aria-label="Search" icon={<HiSearch />} size="sm" />
+              </HStack>
+            </Stack>
           </Stack>
 
           {sorted.map((x) => (

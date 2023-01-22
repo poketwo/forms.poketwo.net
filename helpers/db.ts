@@ -3,7 +3,7 @@ import { getUnixTime, sub } from "date-fns";
 import { Long, MongoClient, UpdateFilter } from "mongodb";
 import NodeCache from "node-cache";
 
-import { Member, Position, RawMember, Submission } from "./types";
+import { Member, Position, RawMember, Submission, SubmissionStatus } from "./types";
 
 const client = new MongoClient(process.env.DATABASE_URI as string);
 
@@ -91,6 +91,7 @@ type FetchSubmissionsOptions = {
   userId?: string;
   page?: number;
   onlyRecent?: boolean;
+  status?: SubmissionStatus;
 };
 
 export const fetchSubmissions = async <T = any>(
@@ -99,7 +100,14 @@ export const fetchSubmissions = async <T = any>(
 ) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
-  let query: any = { form_id: formId };
+  let query: any = { form_id: formId, status: { $nin: [1, 2] } };
+
+  if (options?.status) {
+    query = {
+      ...query,
+      status: options.status,
+    };
+  }
 
   if (options?.userId) {
     query = {
@@ -115,7 +123,7 @@ export const fetchSubmissions = async <T = any>(
     };
   }
 
-  let cursor = collection.find<Submission<T>>(query).sort({ _id: -1 });
+  let cursor = collection.find<Submission<T>>(query).sort({ status: -1, _id: -1 });
 
   if (options?.page) {
     cursor = cursor.limit(100).skip(100 * (options.page - 1));

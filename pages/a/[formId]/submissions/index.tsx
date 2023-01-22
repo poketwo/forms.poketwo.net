@@ -49,6 +49,7 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
     const _submissions = await fetchSubmissions(form.slug, {
       page: Number(query.page ?? 1),
       userId: query.userId?.toString(),
+      status: query.status ? Number(query.status) : undefined,
     });
     const submissions = await _submissions.toArray();
 
