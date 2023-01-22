@@ -3,9 +3,11 @@ import { PropsWithChildren } from "react";
 
 const FieldWrapper = ({ children }: PropsWithChildren<{}>) => {
   const shadow = useColorModeValue("base", "lg");
-  <Box rounded="md" shadow={shadow} p="4">
-    {children}
-  </Box>;
+  return (
+    <Box rounded="md" shadow={shadow} p="4">
+      {children}
+    </Box>
+  );
 };
 
 export default FieldWrapper;
