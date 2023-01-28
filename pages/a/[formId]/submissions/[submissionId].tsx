@@ -226,7 +226,6 @@ const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
                 placeholder="Enter comment..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                isRequired
               />
               <FormHelperText>This comment will be sent to the submitter.</FormHelperText>
             </FormControl>
