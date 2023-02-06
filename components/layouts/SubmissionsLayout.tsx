@@ -23,6 +23,7 @@ import {
 import { Form } from "@formium/types";
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
+import * as querystring from "querystring";
 import { forwardRef, useEffect, useMemo, useRef } from "react";
 import { HiCheck, HiChevronLeft, HiChevronRight, HiFlag, HiSearch, HiX } from "react-icons/hi";
 
@@ -44,9 +45,9 @@ type SubmissionItemProps = {
 const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
   ({ submission }: SubmissionItemProps, ref) => {
     const { query, asPath } = useRouter();
-    const page = Number(query.page ?? 1);
+    const { formId, submissionId, ...newQuery } = query;
 
-    const href = `/a/${query.formId}/submissions/${submission._id}?page=${page}`;
+    const href = `/a/${formId}/submissions/${submission._id}?${querystring.stringify(newQuery)}`;
     const activeBg = useColorModeValue("gray.100", "gray.700");
 
     return (
