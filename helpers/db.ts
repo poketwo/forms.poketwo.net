@@ -41,7 +41,9 @@ const ROLES: [Position, string[]][] = [
 export const fetchMember = wrapCache("member", async (id: string): Promise<Member | undefined> => {
   const db = await dbPromise;
   const collection = db.collection("member");
-  const result = <RawMember | null>await collection.findOne({ _id: Long.fromString(id) });
+  const result = <RawMember | null>await collection.findOne({
+    _id: { id: Long.fromString(id), guild_id: Long.fromString("716390832034414685") },
+  });
   if (!result) return undefined;
 
   const roles = result.roles?.map((x) => x.toString());
