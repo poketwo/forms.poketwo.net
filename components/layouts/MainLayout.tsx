@@ -130,7 +130,6 @@ const NavItem = ({ href, subtle = false, icon, label }: NavItemProps) => {
 const Navigation = () => (
   <Stack spacing="1">
     <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
-    <NavItem href="/a/helper-application" icon={<HiClipboardList />} label="Helper Application" />
     <NavItem
       href="/a/moderator-application"
       icon={<HiClipboardList />}
