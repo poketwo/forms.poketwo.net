@@ -128,7 +128,7 @@ export const fetchSubmissions = async <T = any>(
   if (options?.onlyRecent) {
     query = {
       ...query,
-      _id: { $gt: ObjectId.createFromTime(getUnixTime(sub(new Date(), { months: 3 }))) },
+      _id: { $gt: ObjectId.createFromTime(getUnixTime(sub(new Date(), { months: 6 }))) },
     };
   }
 
