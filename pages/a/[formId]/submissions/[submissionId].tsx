@@ -12,7 +12,7 @@ import {
   Heading,
   HStack,
   IconButton,
-  Input,
+  Textarea,
   LightMode,
   Modal,
   ModalBody,
@@ -221,11 +221,12 @@ const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
           <form id="comment" onSubmit={handleSubmit}>
             <FormControl>
               <FormLabel>Comment</FormLabel>
-              <Input
+              <Textarea
                 name="comment"
                 placeholder="Enter comment..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
+                style="height: 200px;"
               />
               <FormHelperText>This comment will be sent to the submitter.</FormHelperText>
             </FormControl>
