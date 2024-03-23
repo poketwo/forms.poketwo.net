@@ -2,17 +2,15 @@ import {
   Box,
   Button,
   ButtonProps,
-  chakra,
   Code,
   Divider,
   Flex,
   FormControl,
   FormHelperText,
   FormLabel,
-  Heading,
   HStack,
+  Heading,
   IconButton,
-  Textarea,
   LightMode,
   Modal,
   ModalBody,
@@ -23,6 +21,8 @@ import {
   ModalOverlay,
   Stack,
   Text,
+  Textarea,
+  chakra,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { Form } from "@formium/types";
@@ -35,11 +35,11 @@ import { fetchSubmission, fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
-  makeSerializable,
   Position,
   SerializableSubmission,
   SubmissionStatus,
   User,
+  makeSerializable,
 } from "~helpers/types";
 import { delay } from "~helpers/utils";
 
@@ -226,7 +226,7 @@ const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
                 placeholder="Enter comment..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                style="height: 200px;"
+                height="200px"
               />
               <FormHelperText>This comment will be sent to the submitter.</FormHelperText>
             </FormControl>
