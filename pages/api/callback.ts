@@ -28,7 +28,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   req.session.next = undefined;
 
   req.session.token = token;
-  req.session.user = user;
+  req.session.user = <any>user;
   req.session.member = member;
   await req.session.save();
 

@@ -81,8 +81,8 @@ const Profile = ({ user }: ProfileProps) => {
     <Menu>
       <ProfileButton user={user} />
       <MenuList shadow="lg" color={useColorModeValue("gray.600", "gray.200")} px="3">
-        <Link href="/api/logout">
-          <MenuItem rounded="md">Sign Out</MenuItem>
+        <Link href="/api/logout" passHref legacyBehavior>
+          <MenuItem as="a" rounded="md">Sign Out</MenuItem>
         </Link>
       </MenuList>
     </Menu>

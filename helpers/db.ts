@@ -19,10 +19,8 @@ const connect = async () => {
 const dbPromise = connect();
 const cache = new NodeCache({ stdTTL: 60 });
 
-type Awaited<T> = T extends PromiseLike<infer U> ? Awaited<U> : T;
-
 const wrapCache = <T extends (id: string) => Promise<any>>(key: string, func: T) => {
-  return async (id: string): Promise<Awaited<ReturnType<T>>> => {
+  return async (id: string): Promise<ReturnType<T>> => {
     const cached = cache.get<ReturnType<T>>(`${key}:${id}`);
     if (cached) return cached;
     const val = await func(id);
