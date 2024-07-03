@@ -5,9 +5,10 @@ import NodeCache from "node-cache";
 
 import { Member, Position, RawMember, Submission, SubmissionStatus } from "./types";
 
-const client = new MongoClient(process.env.DATABASE_URI as string);
+let client: MongoClient | undefined;
 
 const connect = async () => {
+  if (!client) client = new MongoClient(process.env.DATABASE_URI as string);
   try {
     await client.connect();
     return client.db(process.env.DATABASE_NAME);
@@ -80,7 +81,7 @@ export const fetchSubmission = async <T = any>(id: string) => {
 
 export const updateSubmission = async <T = any>(
   id: string,
-  update: UpdateFilter<Omit<Submission<T>, "_id">>,
+  update: UpdateFilter<Omit<Submission<T>, "_id">>
 ) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
@@ -96,7 +97,7 @@ type FetchSubmissionsOptions = {
 
 export const fetchSubmissions = async <T = any>(
   formId: string,
-  options?: FetchSubmissionsOptions,
+  options?: FetchSubmissionsOptions
 ) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
