@@ -4,11 +4,10 @@ import absoluteUrl from "next-absolute-url";
 
 import { fetchMember } from "~helpers/db";
 import oauth from "~helpers/oauth";
-import { AuthMode, withSession } from "~helpers/session";
-import { NextIronRequest } from "~helpers/types";
+import { AuthMode, NextIronRequest, withSession } from "~helpers/session";
 
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
-  const id = req.session.get("id");
+  const id = req.session.id;
   if (!id) return res.status(401).end();
 
   const { code, state } = req.query;
@@ -25,12 +24,12 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const user = await oauth.getUser(token.access_token);
   const member = await fetchMember(user.id);
 
-  const next = req.session.get<string>("next");
-  req.session.unset("next");
+  const next = req.session.next;
+  req.session.next = undefined;
 
-  req.session.set("token", token);
-  req.session.set("user", user);
-  req.session.set("member", member);
+  req.session.token = token;
+  req.session.user = user;
+  req.session.member = member;
   await req.session.save();
 
   res.redirect(next ?? "/");

@@ -5,7 +5,7 @@ import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { makeSerializable, Position, SerializableSubmission, User } from "~helpers/types";
+import { Position, SerializableSubmission, User, makeSerializable } from "~helpers/types";
 
 type SubmissionsPageProps = {
   user: User;
@@ -31,7 +31,7 @@ export default SubmissionsPage;
 export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
   async ({ req, params, query }) => {
     const id = params?.formId?.toString();
-    const user = req.session.get<User>("user");
+    const user = req.session.user;
 
     if (!id) throw new Error("Form ID not found");
     if (!user) throw new Error("User not found");

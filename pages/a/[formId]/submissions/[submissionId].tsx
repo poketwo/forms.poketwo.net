@@ -304,7 +304,7 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
           <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
         </Box>
-        <Box flex="1" overflow="scroll" p="6" zIndex={0}>
+        <Box flex="1" overflow="auto" p="6" zIndex={0}>
           <SubmissionContent key={form.id} form={form} submission={sub} />
         </Box>
       </Flex>
@@ -326,7 +326,7 @@ type SubmissionPageQuery = {
 
 export const getServerSideProps = withServerSideSession<SubmissionPageProps, SubmissionPageQuery>(
   async ({ req, params, query }) => {
-    const user = req.session.get<User>("user");
+    const user = req.session.user;
     if (!params) throw new Error("No params found.");
     if (!user) throw new Error("User not found");
 

@@ -2,7 +2,6 @@ import { Alert, AlertDescription, AlertIcon, AlertStatus, AlertTitle, Box } from
 import { FormiumForm } from "@formium/react";
 import { Form } from "@formium/types";
 import { useState } from "react";
-import NoSSR from "react-no-ssr";
 
 import components from "~components/formium";
 import ErrorAlert from "~components/formium/ErrorAlert";
@@ -103,10 +102,7 @@ const FormContent = ({ form, previous }: FormPageProps) => {
 const FormPage = (props: FormPageProps) => (
   <MainLayout user={props.user}>
     <Box maxW="3xl" mx="auto">
-      {/* @ts-ignore */}
-      <NoSSR>
-        <FormContent key={props.form.id} {...props} />
-      </NoSSR>
+      <FormContent key={props.form.id} {...props} />
     </Box>
   </MainLayout>
 );
@@ -115,7 +111,7 @@ export default FormPage;
 
 export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ req, params }) => {
   const id = params?.formId?.toString();
-  const user = req.session.get<User>("user");
+  const user = req.session.user;
 
   if (!id) throw new Error("Form ID not found");
   if (!user) throw new Error("User not found");

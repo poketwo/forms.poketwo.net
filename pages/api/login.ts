@@ -3,15 +3,14 @@ import { NextApiResponse } from "next";
 import absoluteUrl from "next-absolute-url";
 
 import oauth from "~helpers/oauth";
-import { AuthMode, withSession } from "~helpers/session";
-import { NextIronRequest } from "~helpers/types";
+import { AuthMode, NextIronRequest, withSession } from "~helpers/session";
 
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
-  let id = req.session.get("id");
+  let id = req.session.id;
 
   if (!id) {
     id = crypto.randomBytes(16).toString("hex");
-    req.session.set("id", id);
+    req.session.id = id;
     await req.session.save();
   }
 

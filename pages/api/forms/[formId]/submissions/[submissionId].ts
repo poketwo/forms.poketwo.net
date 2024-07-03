@@ -3,10 +3,9 @@ import { Long } from "mongodb";
 import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
-
 import { fetchSubmission, updateSubmission } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { Position, Submission, SubmissionStatus, User } from "~helpers/types";
+import { Position, Submission, SubmissionStatus } from "~helpers/types";
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
 
@@ -52,7 +51,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
 
   if (typeof req.body.status !== "number") return res.status(400).end();
 
-  const user = req.session.get<User>("user");
+  const user = req.session.user;
   if (!user) return res.status(401);
 
   const submission = await fetchSubmission(submissionId);

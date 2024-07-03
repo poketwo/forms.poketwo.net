@@ -27,9 +27,9 @@ import * as querystring from "querystring";
 import { forwardRef, useEffect, useMemo, useRef } from "react";
 import { HiCheck, HiChevronLeft, HiChevronRight, HiFlag, HiSearch, HiX } from "react-icons/hi";
 
-import MainLayout, { MainLayoutProps } from "./MainLayout";
-
 import { SerializableSubmission, SubmissionStatus } from "~helpers/types";
+
+import MainLayout, { MainLayoutProps } from "./MainLayout";
 
 const SORT_ORDER: { [key in SubmissionStatus]: number } = {
   [SubmissionStatus.MARKED]: 0,
@@ -51,30 +51,29 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
     const activeBg = useColorModeValue("gray.100", "gray.700");
 
     return (
-      <Link href={href}>
-        <a>
-          <HStack
-            px="6"
-            py="1"
-            transition="all 0.2s"
-            bg={asPath.startsWith(href) ? activeBg : undefined}
-            _hover={{ backgroundColor: activeBg }}
-            ref={ref}
-          >
-            <Box flex="1">
-              <Text fontWeight="bold">{submission.user_tag}</Text>
-              <Text color="gray.500" isTruncated>
-                {submission.user_id}
-              </Text>
-            </Box>
+      <Link href={href} passHref legacyBehavior>
+        <HStack
+          as="a"
+          px="6"
+          py="1"
+          transition="all 0.2s"
+          bg={asPath.startsWith(href) ? activeBg : undefined}
+          _hover={{ backgroundColor: activeBg }}
+          ref={ref}
+        >
+          <Box flex="1">
+            <Text fontWeight="bold">{submission.user_tag}</Text>
+            <Text color="gray.500" isTruncated>
+              {submission.user_id}
+            </Text>
+          </Box>
 
-            {submission.status === SubmissionStatus.ACCEPTED && (
-              <Icon as={HiCheck} color="green.500" />
-            )}
-            {submission.status === SubmissionStatus.MARKED && <Icon as={HiFlag} color="blue.500" />}
-            {submission.status === SubmissionStatus.REJECTED && <Icon as={HiX} color="red.500" />}
-          </HStack>
-        </a>
+          {submission.status === SubmissionStatus.ACCEPTED && (
+            <Icon as={HiCheck} color="green.500" />
+          )}
+          {submission.status === SubmissionStatus.MARKED && <Icon as={HiFlag} color="blue.500" />}
+          {submission.status === SubmissionStatus.REJECTED && <Icon as={HiX} color="red.500" />}
+        </HStack>
       </Link>
     );
   }
@@ -106,7 +105,7 @@ type PaginationProps = {
 
 const Pagination = ({ page, href, count }: PaginationProps) => (
   <HStack>
-    <Link href={page > 1 ? `${href}?page=${page - 1}` : "#"} passHref>
+    <Link href={page > 1 ? `${href}?page=${page - 1}` : "#"} passHref legacyBehavior>
       <IconButton
         as="a"
         flex="1"
@@ -117,7 +116,7 @@ const Pagination = ({ page, href, count }: PaginationProps) => (
         disabled={page <= 1}
       />
     </Link>
-    <Link href={count >= 100 ? `${href}?page=${page + 1}` : "#"} passHref>
+    <Link href={count >= 100 ? `${href}?page=${page + 1}` : "#"} passHref legacyBehavior>
       <IconButton
         as="a"
         flex="1"
@@ -217,13 +216,13 @@ const SubmissionsLayout = ({
           divider={<Divider />}
           w="96"
           shadow={shadow}
-          overflow="scroll"
+          overflow="auto"
           bg={bg}
           zIndex={2}
           display={{ base: "none", lg: "flex" }}
         >
           <Stack py="4" spacing="4">
-            <Link href={href} passHref>
+            <Link href={href} passHref legacyBehavior>
               <Heading as="a" mx="6" size="md">
                 {form.name}
               </Heading>
@@ -242,7 +241,7 @@ const SubmissionsLayout = ({
           <Pagination page={page} href={href} count={sorted.length} />
         </Stack>
 
-        <Box flex="1" p="6" overflow="scroll" {...contentContainerProps}>
+        <Box flex="1" p="6" overflow="auto" {...contentContainerProps}>
           {children}
         </Box>
       </Flex>

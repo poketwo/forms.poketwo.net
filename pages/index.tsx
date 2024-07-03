@@ -40,10 +40,10 @@ const Home = ({ error }: HomeProps) => {
 export default Home;
 
 export const getServerSideProps = withServerSideSession<HomeProps>(async ({ req }) => {
-  const error = req.session.get<string>("error") ?? null;
+  const error = req.session.error ?? null;
 
   if (!error) {
-    req.session.unset("error");
+    req.session.error = undefined;
     await req.session.save();
     return { props: { error } };
   }

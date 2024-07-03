@@ -1,8 +1,4 @@
 import { Long, ObjectId } from "bson";
-import { NextApiRequest } from "next";
-import { Session } from "next-iron-session";
-
-export type NextIronRequest = NextApiRequest & { session: Session };
 
 export type User = {
   id: string;

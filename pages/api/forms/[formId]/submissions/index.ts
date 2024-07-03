@@ -3,10 +3,9 @@ import { Long } from "mongodb";
 import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
-
 import { createSubmission } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { Submission, User } from "~helpers/types";
+import { Submission } from "~helpers/types";
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
 
@@ -36,7 +35,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   if (req.method !== "POST") return res.status(405).send("Method not allowed");
   if (typeof formId !== "string") return res.status(400).end();
 
-  const user = req.session.get<User>("user");
+  const user = req.session.user;
   if (!user) return res.status(401);
 
   const _submission = {

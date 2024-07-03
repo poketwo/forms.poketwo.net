@@ -17,15 +17,13 @@ type FormCardProps = {
 const FormCard = ({ form }: FormCardProps) => {
   const shadow = useColorModeValue("base", "md");
   return (
-    <Link href={`/a/${form.slug}`}>
-      <a>
-        <HStack shadow={shadow} rounded="md" p="4" transition="all 0.2s" _hover={{ shadow: "lg" }}>
-          <Text fontSize="md" flex="1">
-            {form.name}
-          </Text>
-          <Icon as={HiChevronRight} />
-        </HStack>
-      </a>
+    <Link href={`/a/${form.slug}`} passHref legacyBehavior>
+      <HStack as="a" shadow={shadow} rounded="md" p="4" transition="all 0.2s" _hover={{ shadow: "lg" }}>
+        <Text fontSize="md" flex="1">
+          {form.name}
+        </Text>
+        <Icon as={HiChevronRight} />
+      </HStack>
     </Link>
   );
 };
@@ -52,7 +50,7 @@ const Dashboard = ({ user, forms }: DashboardProps) => {
 export default Dashboard;
 
 export const getServerSideProps = withServerSideSession<DashboardProps>(async ({ req }) => {
-  const user = req.session.get<User>("user");
+  const user = req.session.user;
   if (!user) throw new Error("User not found");
 
   const forms = await Promise.all(FORMS.map((x) => formium.getFormBySlug(x)));

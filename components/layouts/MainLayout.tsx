@@ -82,9 +82,7 @@ const Profile = ({ user }: ProfileProps) => {
       <ProfileButton user={user} />
       <MenuList shadow="lg" color={useColorModeValue("gray.600", "gray.200")} px="3">
         <Link href="/api/logout">
-          <a>
-            <MenuItem rounded="md">Sign Out</MenuItem>
-          </a>
+          <MenuItem rounded="md">Sign Out</MenuItem>
         </Link>
       </MenuList>
     </Menu>
@@ -103,7 +101,7 @@ const NavItem = ({ href, subtle = false, icon, label }: NavItemProps) => {
   const active = asPath.startsWith(href);
 
   return (
-    <Link href={href} passHref>
+    <Link href={href} passHref legacyBehavior>
       <HStack
         as="a"
         w="full"
@@ -194,7 +192,7 @@ const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutPr
           bg="gray.900"
           color="white"
           fontSize="sm"
-          overflow="scroll"
+          overflow="auto"
           shadow={shadow}
           zIndex={3}
           display={{ base: "none", xl: "flex" }}
@@ -208,7 +206,7 @@ const MainLayout = ({ user, contentContainerProps = {}, children }: MainLayoutPr
           <NavItem href="/api/logout" icon={<HiLogout />} label="Sign Out" />
         </Stack>
 
-        <Box flex="1" p="8" overflow="scroll" {...contentContainerProps}>
+        <Box flex="1" p="8" overflow="auto" {...contentContainerProps}>
           {children}
         </Box>
       </Flex>

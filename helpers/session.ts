@@ -1,10 +1,11 @@
+import { TokenRequestResult } from "discord-oauth2";
+import { IronSession, getIronSession } from "iron-session";
 import {
   GetServerSidePropsContext,
   GetServerSidePropsResult,
   NextApiRequest,
   NextApiResponse,
 } from "next";
-import { Session, withIronSession } from "next-iron-session";
 import { ParsedUrlQuery } from "querystring";
 
 import { fetchMember } from "./db";
@@ -19,7 +20,16 @@ const IRON_CONFIG = {
   },
 };
 
-export type NextIronRequest = NextApiRequest & { session: Session };
+type SessionVars = {
+  user?: User;
+  member?: Member;
+  error?: string;
+  next?: string;
+  id?: string;
+  token?: TokenRequestResult;
+};
+
+export type NextIronRequest = NextApiRequest & { session: IronSession<SessionVars> };
 
 export type NextIronGetServerSidePropsContext<Q extends ParsedUrlQuery> =
   GetServerSidePropsContext<Q> & {
@@ -45,10 +55,10 @@ enum SessionStatus {
   CONTINUE,
 }
 
-const addMemberInfo = async (req: NextIronRequest) => {
-  const user = req.session.get<User>("user");
+const addMemberInfo = async (session: IronSession<SessionVars>) => {
+  const user = session.user;
   const member = user ? await fetchMember(user.id) : undefined;
-  req.session.set("member", member);
+  session.member = member;
   return { user, member };
 };
 
@@ -75,7 +85,8 @@ export const withSession = (
   position?: Position
 ) => {
   const wrapped = async (req: NextIronRequest, res: NextApiResponse) => {
-    const { user, member } = await addMemberInfo(req);
+    req.session = await getIronSession<SessionVars>(req, res, IRON_CONFIG);
+    const { user, member } = await addMemberInfo(req.session);
     const status = await handleRequest(user, member, mode, position);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
@@ -88,7 +99,8 @@ export const withSession = (
 
     return handler(req, res);
   };
-  return withIronSession(wrapped, IRON_CONFIG);
+
+  return wrapped;
 };
 
 export const withServerSideSession = <
@@ -102,7 +114,8 @@ export const withServerSideSession = <
   const wrapped = async (
     ctx: NextIronGetServerSidePropsContext<Q>
   ): Promise<GetServerSidePropsResult<T>> => {
-    const { user, member } = await addMemberInfo(ctx.req);
+    ctx.req.session = await getIronSession<SessionVars>(ctx.req, ctx.res, IRON_CONFIG);
+    const { user, member } = await addMemberInfo(ctx.req.session);
     const status = await handleRequest(user, member, mode, position);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
@@ -116,5 +129,5 @@ export const withServerSideSession = <
     return handler(ctx);
   };
 
-  return withIronSession(wrapped, IRON_CONFIG);
+  return wrapped;
 };
