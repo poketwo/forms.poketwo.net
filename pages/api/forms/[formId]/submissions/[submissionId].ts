@@ -18,7 +18,7 @@ const sendEmail = async (
   submission: Submission,
   formId: string,
   status: number,
-  comment: string
+  comment: string,
 ) => {
   if (!submission.email) return;
   if (!(status in EMAIL_UPDATES)) return;

@@ -73,7 +73,7 @@ export type SerializableSubmission<T = any> = {
 };
 
 export const makeSerializable = <T = any>(
-  submission: Submission<T>
+  submission: Submission<T>,
 ): SerializableSubmission<T> => ({
   _id: submission._id.toString(),
   form_id: submission.form_id.toString(),

@@ -63,5 +63,5 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
     };
   },
   AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER
+  Position.COMMUNITY_MANAGER,
 );

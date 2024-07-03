@@ -82,7 +82,7 @@ export const fetchSubmission = async <T = any>(id: string) => {
 
 export const updateSubmission = async <T = any>(
   id: string,
-  update: UpdateFilter<Omit<Submission<T>, "_id">>
+  update: UpdateFilter<Omit<Submission<T>, "_id">>,
 ) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
@@ -98,7 +98,7 @@ type FetchSubmissionsOptions = {
 
 export const fetchSubmissions = async <T = any>(
   formId: string,
-  options?: FetchSubmissionsOptions
+  options?: FetchSubmissionsOptions,
 ) => {
   const db = await dbPromise;
   const collection = db.collection("submission");

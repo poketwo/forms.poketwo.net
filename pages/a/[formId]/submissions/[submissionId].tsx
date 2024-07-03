@@ -153,7 +153,7 @@ type SubmissionContentProps = {
 const SubmissionContent = ({ form, submission }: SubmissionContentProps) => {
   const fieldNames = Object.values(form.schema?.fields ?? {}).reduce(
     (acc, val) => acc.set(val.slug, val.title),
-    new Map<string, string | undefined>()
+    new Map<string, string | undefined>(),
   );
 
   const ownedFields = [...fieldNames.keys()].filter((x) => submission.data.hasOwnProperty(x));
@@ -363,5 +363,5 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     };
   },
   AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER
+  Position.COMMUNITY_MANAGER,
 );

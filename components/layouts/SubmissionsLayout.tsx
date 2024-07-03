@@ -76,7 +76,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
         </HStack>
       </Link>
     );
-  }
+  },
 );
 
 const FilterForm = () => {
@@ -155,9 +155,9 @@ const SubmissionsLayout = ({
       [...submissions].sort(
         (a, b) =>
           SORT_ORDER[a.status ?? SubmissionStatus.UNDER_REVIEW] -
-          SORT_ORDER[b.status ?? SubmissionStatus.UNDER_REVIEW]
+          SORT_ORDER[b.status ?? SubmissionStatus.UNDER_REVIEW],
       ),
-    [submissions]
+    [submissions],
   );
 
   useEffect(() => {

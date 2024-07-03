@@ -66,7 +66,7 @@ const handleRequest = async (
   user: User | undefined,
   member: Member | undefined,
   mode: AuthMode,
-  position: Position | undefined
+  position: Position | undefined,
 ) => {
   if (mode === AuthMode.GUEST && user) return SessionStatus.REDIRECT_DASHBOARD;
   if (mode === AuthMode.AUTHENTICATED && !user) return SessionStatus.REDIRECT_LOGIN;
@@ -82,7 +82,7 @@ const handleRequest = async (
 export const withSession = (
   handler: (req: NextIronRequest, res: NextApiResponse) => void,
   mode: AuthMode,
-  position?: Position
+  position?: Position,
 ) => {
   const wrapped = async (req: NextIronRequest, res: NextApiResponse) => {
     req.session = await getIronSession<SessionVars>(req, res, IRON_CONFIG);
@@ -105,14 +105,14 @@ export const withSession = (
 
 export const withServerSideSession = <
   T extends { [key: string]: any } = { [key: string]: any },
-  Q extends ParsedUrlQuery = ParsedUrlQuery
+  Q extends ParsedUrlQuery = ParsedUrlQuery,
 >(
   handler: (ctx: NextIronGetServerSidePropsContext<Q>) => Promise<GetServerSidePropsResult<T>>,
   mode: AuthMode,
-  position?: Position
+  position?: Position,
 ) => {
   const wrapped = async (
-    ctx: NextIronGetServerSidePropsContext<Q>
+    ctx: NextIronGetServerSidePropsContext<Q>,
   ): Promise<GetServerSidePropsResult<T>> => {
     ctx.req.session = await getIronSession<SessionVars>(ctx.req, ctx.res, IRON_CONFIG);
     const { user, member } = await addMemberInfo(ctx.req.session);

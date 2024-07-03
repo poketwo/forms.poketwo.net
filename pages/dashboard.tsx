@@ -18,7 +18,14 @@ const FormCard = ({ form }: FormCardProps) => {
   const shadow = useColorModeValue("base", "md");
   return (
     <Link href={`/a/${form.slug}`} passHref legacyBehavior>
-      <HStack as="a" shadow={shadow} rounded="md" p="4" transition="all 0.2s" _hover={{ shadow: "lg" }}>
+      <HStack
+        as="a"
+        shadow={shadow}
+        rounded="md"
+        p="4"
+        transition="all 0.2s"
+        _hover={{ shadow: "lg" }}
+      >
         <Text fontSize="md" flex="1">
           {form.name}
         </Text>
