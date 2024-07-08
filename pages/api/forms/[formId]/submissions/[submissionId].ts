@@ -5,7 +5,8 @@ import { NextApiResponse } from "next";
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 import { fetchSubmission, updateSubmission } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { Position, Submission, SubmissionStatus } from "~helpers/types";
+import { permittedToViewForm } from "~helpers/permissions";
+import { Submission, SubmissionStatus } from "~helpers/types";
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
 
@@ -18,7 +19,7 @@ const sendEmail = async (
   submission: Submission,
   formId: string,
   status: number,
-  comment: string,
+  comment: string
 ) => {
   if (!submission.email) return;
   if (!(status in EMAIL_UPDATES)) return;
@@ -52,7 +53,10 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   if (typeof req.body.status !== "number") return res.status(400).end();
 
   const user = req.session.user;
-  if (!user) return res.status(401);
+  const member = req.session.member;
+  if (!user || !member) return res.status(401);
+
+  if (!permittedToViewForm(member, formId)) return res.status(403).end();
 
   const submission = await fetchSubmission(submissionId);
   if (!submission) return res.status(404);
@@ -68,4 +72,4 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   res.status(204).end();
 };
 
-export default withSession(handler, AuthMode.AUTHENTICATED, Position.COMMUNITY_MANAGER);
+export default withSession(handler, AuthMode.AUTHENTICATED);

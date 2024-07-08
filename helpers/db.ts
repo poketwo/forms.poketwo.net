@@ -3,7 +3,7 @@ import { getUnixTime, sub } from "date-fns";
 import { Long, MongoClient, UpdateFilter } from "mongodb";
 import NodeCache from "node-cache";
 
-import { Member, Position, RawMember, Submission, SubmissionStatus } from "./types";
+import { Member, RawMember, Submission, SubmissionStatus } from "./types";
 
 let client: MongoClient | undefined;
 
@@ -30,13 +30,6 @@ const wrapCache = <T extends (id: string) => Promise<any>>(key: string, func: T)
   };
 };
 
-const ROLES: [Position, string[]][] = [
-  [Position.ADMIN, ["908088852567187467"]],
-  [Position.COMMUNITY_MANAGER, ["718006431231508481"]],
-  [Position.MODERATOR, ["724879492622843944", "813433839471820810"]],
-  [Position.HELPER, ["732712709514199110", "794438698241884200"]],
-];
-
 export const fetchMember = wrapCache("member", async (id: string): Promise<Member | undefined> => {
   const db = await dbPromise;
   const collection = db.collection("member");
@@ -51,7 +44,6 @@ export const fetchMember = wrapCache("member", async (id: string): Promise<Membe
     ...result,
     _id: result._id.toString(),
     roles,
-    position: ROLES.find(([, ids]) => roles?.some((x) => ids.includes(x)))?.[0] ?? Position.MEMBER,
   };
 });
 

@@ -4,6 +4,7 @@ import { Form } from "@formium/types";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
+import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { Position, SerializableSubmission, User, makeSerializable } from "~helpers/types";
 
@@ -28,17 +29,26 @@ const SubmissionsPage = ({ user, form, submissions }: SubmissionsPageProps) => {
 
 export default SubmissionsPage;
 
-export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
-  async ({ req, params, query }) => {
-    const id = params?.formId?.toString();
-    const user = req.session.user;
+type SubmissionsPageQuery = {
+  formId: string;
+};
 
-    if (!id) throw new Error("Form ID not found");
-    if (!user) throw new Error("User not found");
+export const getServerSideProps = withServerSideSession<SubmissionsPageProps, SubmissionsPageQuery>(
+  async ({ req, params, query }) => {
+    if (!params) throw new Error("No params found.");
+    const { formId } = params;
+
+    const user = req.session.user;
+    const member = req.session.member;
+    if (!user || !member) throw new Error("User not found");
+
+    if (!permittedToViewForm(member, formId)) {
+      return { redirect: { permanent: false, destination: "/dashboard" } };
+    }
 
     let form;
     try {
-      form = await formium.getFormBySlug(id);
+      form = await formium.getFormBySlug(formId);
     } catch (e) {
       const err = e as any;
       if (err.status === 404) return { notFound: true };
@@ -55,7 +65,7 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
 
     return {
       props: {
-        id,
+        id: formId,
         form,
         user,
         submissions: submissions.map(makeSerializable),
@@ -63,5 +73,5 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps>(
     };
   },
   AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER,
+  Position.COMMUNITY_MANAGER
 );

@@ -51,7 +51,6 @@ export enum AuthMode {
 enum SessionStatus {
   REDIRECT_LOGIN,
   REDIRECT_DASHBOARD,
-  FORBIDDEN,
   CONTINUE,
 }
 
@@ -62,39 +61,25 @@ const addMemberInfo = async (session: IronSession<SessionVars>) => {
   return { user, member };
 };
 
-const handleRequest = async (
-  user: User | undefined,
-  member: Member | undefined,
-  mode: AuthMode,
-  position: Position | undefined,
-) => {
+const handleRequest = async (user: User | undefined, mode: AuthMode) => {
   if (mode === AuthMode.GUEST && user) return SessionStatus.REDIRECT_DASHBOARD;
   if (mode === AuthMode.AUTHENTICATED && !user) return SessionStatus.REDIRECT_LOGIN;
-
-  if (position) {
-    if (!member) return SessionStatus.FORBIDDEN;
-    if (member.position < position) return SessionStatus.FORBIDDEN;
-  }
-
   return SessionStatus.CONTINUE;
 };
 
 export const withSession = (
   handler: (req: NextIronRequest, res: NextApiResponse) => void,
-  mode: AuthMode,
-  position?: Position,
+  mode: AuthMode
 ) => {
   const wrapped = async (req: NextIronRequest, res: NextApiResponse) => {
     req.session = await getIronSession<SessionVars>(req, res, IRON_CONFIG);
-    const { user, member } = await addMemberInfo(req.session);
-    const status = await handleRequest(user, member, mode, position);
+    const { user } = await addMemberInfo(req.session);
+    const status = await handleRequest(user, mode);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
       return res.redirect("/dashboard");
     } else if (status === SessionStatus.REDIRECT_LOGIN) {
       return res.redirect("/");
-    } else if (status === SessionStatus.FORBIDDEN) {
-      return res.status(403).end();
     }
 
     return handler(req, res);
@@ -105,25 +90,23 @@ export const withSession = (
 
 export const withServerSideSession = <
   T extends { [key: string]: any } = { [key: string]: any },
-  Q extends ParsedUrlQuery = ParsedUrlQuery,
+  Q extends ParsedUrlQuery = ParsedUrlQuery
 >(
   handler: (ctx: NextIronGetServerSidePropsContext<Q>) => Promise<GetServerSidePropsResult<T>>,
   mode: AuthMode,
-  position?: Position,
+  position?: Position
 ) => {
   const wrapped = async (
-    ctx: NextIronGetServerSidePropsContext<Q>,
+    ctx: NextIronGetServerSidePropsContext<Q>
   ): Promise<GetServerSidePropsResult<T>> => {
     ctx.req.session = await getIronSession<SessionVars>(ctx.req, ctx.res, IRON_CONFIG);
-    const { user, member } = await addMemberInfo(ctx.req.session);
-    const status = await handleRequest(user, member, mode, position);
+    const { user } = await addMemberInfo(ctx.req.session);
+    const status = await handleRequest(user, mode);
 
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
       return { redirect: { permanent: false, destination: "/dashboard" } };
     } else if (status === SessionStatus.REDIRECT_LOGIN) {
       return { redirect: { permanent: false, destination: "/" } };
-    } else if (status === SessionStatus.FORBIDDEN) {
-      return { redirect: { permanent: false, destination: "/dashboard" } };
     }
 
     return handler(ctx);

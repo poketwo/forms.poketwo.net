@@ -29,7 +29,6 @@ export type Member = {
   muted?: boolean;
   trading_muted?: boolean;
   roles?: string[];
-  position: Position;
 };
 
 export enum Position {

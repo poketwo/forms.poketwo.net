@@ -33,6 +33,7 @@ import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
+import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
   Position,
@@ -153,7 +154,7 @@ type SubmissionContentProps = {
 const SubmissionContent = ({ form, submission }: SubmissionContentProps) => {
   const fieldNames = Object.values(form.schema?.fields ?? {}).reduce(
     (acc, val) => acc.set(val.slug, val.title),
-    new Map<string, string | undefined>(),
+    new Map<string, string | undefined>()
   );
 
   const ownedFields = [...fieldNames.keys()].filter((x) => submission.data.hasOwnProperty(x));
@@ -326,11 +327,16 @@ type SubmissionPageQuery = {
 
 export const getServerSideProps = withServerSideSession<SubmissionPageProps, SubmissionPageQuery>(
   async ({ req, params, query }) => {
-    const user = req.session.user;
     if (!params) throw new Error("No params found.");
-    if (!user) throw new Error("User not found");
-
     const { formId, submissionId } = params;
+
+    const user = req.session.user;
+    const member = req.session.member;
+    if (!user || !member) throw new Error("User not found");
+
+    if (!permittedToViewForm(member, formId)) {
+      return { redirect: { permanent: false, destination: "/dashboard" } };
+    }
 
     let form;
     try {
@@ -363,5 +369,5 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     };
   },
   AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER,
+  Position.COMMUNITY_MANAGER
 );
