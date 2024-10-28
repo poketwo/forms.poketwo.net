@@ -12,8 +12,15 @@ import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SubmissionStatus, User } from "~helpers/types";
 import { delay } from "~helpers/utils";
 
+const MARKED_ALERT_STATUS = [
+  "info",
+  (form: Form) => `${form.name} Submitted`,
+  (form: Form) =>
+    `Your ${form.name} has been submitted and is under review. We will get back to you soon.`,
+] as const;
+
 const ALERT_STATUS: {
-  [key in SubmissionStatus]: [AlertStatus, (form: Form) => string, (form: Form) => string];
+  [key in SubmissionStatus]: readonly [AlertStatus, (form: Form) => string, (form: Form) => string];
 } = {
   [SubmissionStatus.UNDER_REVIEW]: [
     "info",
@@ -32,12 +39,10 @@ const ALERT_STATUS: {
     (form) =>
       `Sorry, your ${form.name} has been rejected. Please do not contact staff members for details.`,
   ],
-  [SubmissionStatus.MARKED]: [
-    "info",
-    (form) => `${form.name} Submitted`,
-    (form) =>
-      `Your ${form.name} has been submitted and is under review. We will get back to you soon.`,
-  ],
+  [SubmissionStatus.MARKED_ORANGE]: MARKED_ALERT_STATUS,
+  [SubmissionStatus.MARKED_YELLOW]: MARKED_ALERT_STATUS,
+  [SubmissionStatus.MARKED_BLUE]: MARKED_ALERT_STATUS,
+  [SubmissionStatus.MARKED_PURPLE]: MARKED_ALERT_STATUS,
 };
 
 type SuccessProps = {

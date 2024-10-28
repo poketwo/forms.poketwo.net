@@ -20,7 +20,7 @@ const Home = ({ error }: HomeProps) => {
 
       <VStack spacing="0">
         <Box>
-          <Image
+          <img
             width="80"
             height="80"
             src="https://poketwo.net/assets/logo.png"

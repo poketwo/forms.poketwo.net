@@ -43,7 +43,10 @@ export enum SubmissionStatus {
   UNDER_REVIEW = 0,
   REJECTED = 1,
   ACCEPTED = 2,
-  MARKED = 3,
+  MARKED_ORANGE = 4,
+  MARKED_YELLOW = 5,
+  MARKED_BLUE = 3,
+  MARKED_PURPLE = 6,
 }
 
 export type Submission<T = any> = {

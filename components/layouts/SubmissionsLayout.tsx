@@ -32,10 +32,13 @@ import { SerializableSubmission, SubmissionStatus } from "~helpers/types";
 import MainLayout, { MainLayoutProps } from "./MainLayout";
 
 const SORT_ORDER: { [key in SubmissionStatus]: number } = {
-  [SubmissionStatus.MARKED]: 0,
-  [SubmissionStatus.UNDER_REVIEW]: 1,
-  [SubmissionStatus.ACCEPTED]: 2,
-  [SubmissionStatus.REJECTED]: 3,
+  [SubmissionStatus.MARKED_ORANGE]: 0,
+  [SubmissionStatus.MARKED_YELLOW]: 1,
+  [SubmissionStatus.MARKED_BLUE]: 2,
+  [SubmissionStatus.MARKED_PURPLE]: 3,
+  [SubmissionStatus.UNDER_REVIEW]: 4,
+  [SubmissionStatus.ACCEPTED]: 5,
+  [SubmissionStatus.REJECTED]: 6,
 };
 
 type SubmissionItemProps = {
@@ -71,7 +74,10 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
           {submission.status === SubmissionStatus.ACCEPTED && (
             <Icon as={HiCheck} color="green.500" />
           )}
-          {submission.status === SubmissionStatus.MARKED && <Icon as={HiFlag} color="blue.500" />}
+          {submission.status === SubmissionStatus.MARKED_ORANGE && <Icon as={HiFlag} color="orange.500" />}
+          {submission.status === SubmissionStatus.MARKED_YELLOW && <Icon as={HiFlag} color="yellow.500" />}
+          {submission.status === SubmissionStatus.MARKED_BLUE && <Icon as={HiFlag} color="blue.500" />}
+          {submission.status === SubmissionStatus.MARKED_PURPLE && <Icon as={HiFlag} color="purple.500" />}
           {submission.status === SubmissionStatus.REJECTED && <Icon as={HiX} color="red.500" />}
         </HStack>
       </Link>
@@ -89,7 +95,10 @@ const FilterForm = () => {
           <option value={SubmissionStatus.UNDER_REVIEW}>New</option>
           <option value={SubmissionStatus.ACCEPTED}>Accepted</option>
           <option value={SubmissionStatus.REJECTED}>Rejected</option>
-          <option value={SubmissionStatus.MARKED}>Marked for Review</option>
+          <option value={SubmissionStatus.MARKED_ORANGE}>Marked for Review (Orange)</option>
+          <option value={SubmissionStatus.MARKED_YELLOW}>Marked for Review (Yellow)</option>
+          <option value={SubmissionStatus.MARKED_BLUE}>Marked for Review (Blue)</option>
+          <option value={SubmissionStatus.MARKED_PURPLE}>Marked for Review (Purple)</option>
         </Select>
         <IconButton type="submit" aria-label="Search" icon={<HiSearch />} size="sm" />
       </HStack>

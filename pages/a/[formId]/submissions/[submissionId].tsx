@@ -19,6 +19,12 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Popover,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverTrigger,
+  Portal,
   Stack,
   Text,
   Textarea,
@@ -44,17 +50,27 @@ import {
 } from "~helpers/types";
 import { delay } from "~helpers/utils";
 
+const COLORS = {
+  [SubmissionStatus.UNDER_REVIEW]: "gray",
+  [SubmissionStatus.ACCEPTED]: "gray",
+  [SubmissionStatus.REJECTED]: "gray",
+  [SubmissionStatus.MARKED_ORANGE]: "orange",
+  [SubmissionStatus.MARKED_YELLOW]: "yellow",
+  [SubmissionStatus.MARKED_BLUE]: "blue",
+  [SubmissionStatus.MARKED_PURPLE]: "purple",
+}
+
 type HeaderButtonProps = ButtonProps & {
   icon: ReactElement;
   label: string;
-  onClick: () => void;
+  onClick?: () => Promise<void> | void;
 };
 
 const HeaderButton = ({ icon, label, onClick, ...props }: HeaderButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | undefined>();
 
-  const handleClick = async () => {
+  const handleClick = onClick ? async () => {
     try {
       setLoading(true);
       await delay(300);
@@ -63,7 +79,7 @@ const HeaderButton = ({ icon, label, onClick, ...props }: HeaderButtonProps) => 
       setError(e as Error);
     }
     setLoading(false);
-  };
+  } : () => {};
 
   return (
     <>
@@ -91,9 +107,44 @@ const HeaderButton = ({ icon, label, onClick, ...props }: HeaderButtonProps) => 
   );
 };
 
+type MarkColorIconButtonProps = {
+  status: SubmissionStatus;
+  onSetStatus: (status: SubmissionStatus) => Promise<void> | void;
+}
+
+const MarkColorIconButton = ({ status, onSetStatus }: MarkColorIconButtonProps) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | undefined>();
+
+  const handleClick = async () => {
+    try {
+      setLoading(true);
+      await delay(300);
+      await onSetStatus(status);
+    } catch (e) {
+      setError(e as Error);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <>
+      <IconButton
+        colorScheme={COLORS[status]}
+        aria-label="Orange"
+        size="lg"
+        icon={<HiFlag />}
+        isLoading={loading}
+        onClick={handleClick}
+      />
+      <ErrorAlert error={error} setError={setError} />
+    </>
+  );
+}
+
 type SubmissionHeaderProps = {
   submission: SerializableSubmission;
-  onSetStatus: (status: SubmissionStatus) => void;
+  onSetStatus: (status: SubmissionStatus) => Promise<void> | void;
 };
 
 const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) => {
@@ -127,13 +178,27 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
           label="Accept"
           onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
         />
-        <HeaderButton
-          colorScheme="blue"
-          isDisabled={submission.status === SubmissionStatus.MARKED}
-          icon={<HiFlag />}
-          label="Mark for Review"
-          onClick={() => onSetStatus(SubmissionStatus.MARKED)}
-        />
+        <Popover>
+          <PopoverTrigger>
+            <div>
+              <HeaderButton
+                colorScheme={COLORS[submission.status ?? SubmissionStatus.UNDER_REVIEW]}
+                icon={<HiFlag />}
+                label="Mark for Review"
+              />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent>
+            <PopoverBody>
+              <HStack>
+                <MarkColorIconButton status={SubmissionStatus.MARKED_ORANGE} onSetStatus={onSetStatus} />
+                <MarkColorIconButton status={SubmissionStatus.MARKED_YELLOW} onSetStatus={onSetStatus} />
+                <MarkColorIconButton status={SubmissionStatus.MARKED_BLUE} onSetStatus={onSetStatus} />
+                <MarkColorIconButton status={SubmissionStatus.MARKED_PURPLE} onSetStatus={onSetStatus} />
+              </HStack>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
         <HeaderButton
           colorScheme="red"
           isDisabled={submission.status === SubmissionStatus.REJECTED}
