@@ -9,7 +9,7 @@ import {
 import { ParsedUrlQuery } from "querystring";
 
 import { fetchMember, fetchPoketwoMember } from "./db";
-import { Member, Position, User } from "./types";
+import { Member, PoketwoMember, Position, User } from "./types";
 
 const IRON_CONFIG = {
   password: process.env.SECRET_KEY as string,
@@ -23,6 +23,7 @@ const IRON_CONFIG = {
 type SessionVars = {
   user?: User;
   member?: Member;
+  poketwoMember?: PoketwoMember;
   error?: string;
   next?: string;
   id?: string;
