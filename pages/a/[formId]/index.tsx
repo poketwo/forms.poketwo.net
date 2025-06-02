@@ -68,7 +68,7 @@ const Success = ({ form, status }: SuccessProps) => (
   </Alert>
 );
 
-const NOT_SUSPENDED_STATUS = [
+const NOT_SUSPENDED_STATUS: readonly [AlertStatus, string, string] = [
   "info",
   "You are not suspended",
   "You can only appeal if you are (permanently) suspended. We do not take appeals for temporary suspensions if that is your case.",
