@@ -68,13 +68,38 @@ const Success = ({ form, status }: SuccessProps) => (
   </Alert>
 );
 
+const NOT_SUSPENDED_STATUS = [
+  "info",
+  "You are not suspended",
+  "You can only appeal if you are (permanently) suspended. We do not take appeals for temporary suspensions if that is your case.",
+];
+
+const NotSuspended = () => (
+  <Alert
+    maxW="3xl"
+    mx="auto"
+    p="8"
+    status={NOT_SUSPENDED_STATUS[0]}
+    flexDirection="column"
+    textAlign="center"
+    rounded="lg"
+  >
+    <AlertIcon boxSize="40px" mr={0} />
+    <AlertTitle mt={4} mb={1} fontSize="lg">
+      {NOT_SUSPENDED_STATUS[1]}
+    </AlertTitle>
+    <AlertDescription maxW="sm">{NOT_SUSPENDED_STATUS[2]}</AlertDescription>
+  </Alert>
+);
+
 type FormPageProps = {
   form: Form;
   user: User;
   previous: SubmissionStatus | null;
+  suspended: boolean;
 };
 
-const FormContent = ({ form, previous }: FormPageProps) => {
+const FormContent = ({ form, previous, suspended }: FormPageProps) => {
   const [status, setStatus] = useState(previous);
   const [error, setError] = useState<Error | undefined>();
 
@@ -94,6 +119,10 @@ const FormContent = ({ form, previous }: FormPageProps) => {
 
   if (status !== null) {
     return <Success form={form} status={status} />;
+  }
+
+  if (suspended == true) {
+    return <NotSuspended />;
   }
 
   return (
@@ -117,6 +146,7 @@ export default FormPage;
 export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ req, params }) => {
   const id = params?.formId?.toString();
   const user = req.session.user;
+  const poketwoMember = req.session.poketwoMember;
 
   if (!id) throw new Error("Form ID not found");
   if (!user) throw new Error("User not found");
@@ -135,12 +165,14 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
   const submissions = await _submissions.limit(1).toArray();
   const previous =
     submissions.length > 0 ? submissions[0].status ?? SubmissionStatus.UNDER_REVIEW : null;
+  const suspended = poketwoMember?.suspended ?? false;
 
   return {
     props: {
       form,
       user,
       previous,
+      suspended,
     },
   };
 }, AuthMode.AUTHENTICATED);

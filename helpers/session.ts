@@ -8,7 +8,7 @@ import {
 } from "next";
 import { ParsedUrlQuery } from "querystring";
 
-import { fetchMember } from "./db";
+import { fetchMember, fetchPoketwoMember } from "./db";
 import { Member, Position, User } from "./types";
 
 const IRON_CONFIG = {
@@ -56,9 +56,14 @@ enum SessionStatus {
 
 const addMemberInfo = async (session: IronSession<SessionVars>) => {
   const user = session.user;
+
   const member = user ? await fetchMember(user.id) : undefined;
   session.member = member;
-  return { user, member };
+
+  const poketwoMember = user ? await fetchPoketwoMember(user.id) : undefined;
+  session.poketwoMember = poketwoMember;
+
+  return { user, member, poketwoMember };
 };
 
 const handleRequest = async (user: User | undefined, mode: AuthMode) => {

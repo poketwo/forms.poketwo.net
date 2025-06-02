@@ -31,6 +31,16 @@ export type Member = {
   roles?: string[];
 };
 
+export type RawPoketwoMember = {
+  _id: Long;
+  suspended?: boolean;
+};
+
+export type PoketwoMember = {
+  _id: string;
+  suspended?: boolean;
+};
+
 export enum Position {
   MEMBER = 0,
   HELPER = 1,
@@ -75,7 +85,7 @@ export type SerializableSubmission<T = any> = {
 };
 
 export const makeSerializable = <T = any>(
-  submission: Submission<T>,
+  submission: Submission<T>
 ): SerializableSubmission<T> => ({
   _id: submission._id.toString(),
   form_id: submission.form_id.toString(),

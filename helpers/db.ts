@@ -3,7 +3,16 @@ import { getUnixTime, sub } from "date-fns";
 import { Long, MongoClient, UpdateFilter } from "mongodb";
 import NodeCache from "node-cache";
 
-import { Member, RawMember, Submission, SubmissionStatus } from "./types";
+import {
+  Member,
+  RawMember,
+  PoketwoMember,
+  RawPoketwoMember,
+  Submission,
+  SubmissionStatus,
+} from "./types";
+
+// Guiduck DB
 
 let client: MongoClient | undefined;
 
@@ -46,6 +55,53 @@ export const fetchMember = wrapCache("member", async (id: string): Promise<Membe
     roles,
   };
 });
+
+// Poketwo DB
+
+let poketwoClient: MongoClient | undefined;
+
+const connectPoketwo = async () => {
+  if (!poketwoClient) poketwoClient = new MongoClient(process.env.POKETWO_DATABASE_URI as string);
+  try {
+    await poketwoClient.connect();
+    return poketwoClient.db(process.env.POKETWO_DATABASE_NAME);
+  } catch (err) {
+    throw err;
+  }
+};
+
+const poketwoDbPromise = connectPoketwo();
+const poketwoCache = new NodeCache({ stdTTL: 60 });
+
+const wrapPoketwoCache = <T extends (id: string) => Promise<any>>(key: string, func: T) => {
+  return async (id: string): Promise<ReturnType<T>> => {
+    const cached = poketwoCache.get<ReturnType<T>>(`${key}:${id}`);
+    if (cached) return cached;
+    const val = await func(id);
+    poketwoCache.set(`${key}:${id}`, val);
+    return val;
+  };
+};
+
+export const fetchPoketwoMember = wrapPoketwoCache(
+  "member",
+  async (id: string): Promise<PoketwoMember | undefined> => {
+    const db = await poketwoDbPromise;
+    const collection = db.collection("member");
+    const result = <RawPoketwoMember | null>await collection.findOne({
+      _id: Long.fromString(id),
+    });
+    if (!result) return undefined;
+
+    const suspended = result.suspended ?? false;
+
+    return {
+      ...result,
+      _id: result._id.toString(),
+      suspended,
+    };
+  }
+);
 
 export const fetchGuild = async (id: string) => {
   const db = await dbPromise;
