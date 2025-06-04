@@ -71,7 +71,7 @@ const Success = ({ form, status }: SuccessProps) => (
 const NOT_SUSPENDED_STATUS: readonly [AlertStatus, string, string] = [
   "info",
   "You are not suspended",
-  "You can only appeal if you are (permanently) suspended. We do not take appeals for temporary suspensions if that is your case.",
+  "You can only appeal if you are permanently suspended. We do not accept appeals for temporary suspensions, if that is your case.",
 ];
 
 const NotSuspended = () => (
@@ -121,7 +121,7 @@ const FormContent = ({ form, previous, suspended }: FormPageProps) => {
     return <Success form={form} status={status} />;
   }
 
-  if (suspended == true) {
+  if (form.slug === "suspension-appeal" && !suspended) {
     return <NotSuspended />;
   }
 

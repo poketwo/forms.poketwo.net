@@ -93,14 +93,11 @@ export const fetchPoketwoMember = wrapPoketwoCache(
     });
     if (!result) return undefined;
 
-    const suspended = result.suspended ?? false;
-
     return {
       ...result,
       _id: result._id.toString(),
-      suspended,
     };
-  }
+  },
 );
 
 export const fetchGuild = async (id: string) => {
