@@ -185,6 +185,24 @@ export const fetchSubmissions = async <T = any>(
   return cursor;
 };
 
+export const fetchUserRejectedSubmissions = async (
+  formId: string,
+  userId: string,
+  excludeSubmissionId?: string
+) => {
+  const db = await dbPromise;
+  const collection = db.collection("submission");
+  const query: any = {
+    form_id: formId,
+    user_id: Long.fromString(userId),
+    status: SubmissionStatus.REJECTED,
+    ...(excludeSubmissionId
+      ? { _id: { $ne: ObjectId.createFromHexString(excludeSubmissionId) } }
+      : {}),
+  };
+  return collection.find<Submission>(query).sort({ _id: -1 }).toArray();
+};
+
 export const createSubmission = async <T = any>(submission: Omit<Submission<T>, "_id">) => {
   const db = await dbPromise;
   const collection = db.collection("submission");
