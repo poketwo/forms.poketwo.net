@@ -27,7 +27,15 @@ import {
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
 import { PropsWithChildren } from "react";
-import { HiClipboardList, HiHome, HiLogout, HiMoon, HiSelector, HiSun } from "react-icons/hi";
+import {
+  HiClipboardList,
+  HiCollection,
+  HiHome,
+  HiLogout,
+  HiMoon,
+  HiSelector,
+  HiSun,
+} from "react-icons/hi";
 
 import { User } from "~helpers/types";
 
@@ -128,6 +136,7 @@ const NavItem = ({ href, subtle = false, icon, label }: NavItemProps) => {
 const Navigation = () => (
   <Stack spacing="1">
     <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
+    <NavItem href="/my-submissions" icon={<HiCollection />} label="My Submissions" />
     <NavItem
       href="/a/moderator-application"
       icon={<HiClipboardList />}
