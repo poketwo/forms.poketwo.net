@@ -17,7 +17,14 @@ import MainLayout from "~components/layouts/MainLayout";
 import { fetchUserSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { SerializableSubmission, SubmissionStatus, User, makeSerializable } from "~helpers/types";
+import { SubmissionStatus, User, makeSerializable } from "~helpers/types";
+
+type UserSubmission = {
+  _id: string;
+  form_id: string;
+  status: SubmissionStatus | null;
+  comment: string | null;
+};
 
 const FORMS = ["moderator-application", "ban-appeal", "suspension-appeal"];
 
@@ -51,7 +58,7 @@ const getDateFromObjectId = (id: string): string => {
 };
 
 type SubmissionCardProps = {
-  submission: SerializableSubmission;
+  submission: UserSubmission;
 };
 
 const SubmissionCard = ({ submission }: SubmissionCardProps) => {
@@ -80,7 +87,7 @@ const SubmissionCard = ({ submission }: SubmissionCardProps) => {
 };
 
 type PriorRejectionProps = {
-  submission: SerializableSubmission;
+  submission: UserSubmission;
 };
 
 const PriorRejection = ({ submission }: PriorRejectionProps) => {
@@ -102,8 +109,8 @@ const PriorRejection = ({ submission }: PriorRejectionProps) => {
 type FormGroup = {
   formSlug: string;
   formName: string;
-  latest: SerializableSubmission;
-  priorRejections: SerializableSubmission[];
+  latest: UserSubmission;
+  priorRejections: UserSubmission[];
 };
 
 type FormGroupCardProps = {
@@ -164,7 +171,7 @@ const FormGroupCard = ({ group }: FormGroupCardProps) => {
 type MySubmissionsProps = {
   user: User;
   formGroups: FormGroup[];
-  ungroupedSubmissions: SerializableSubmission[];
+  ungroupedSubmissions: UserSubmission[];
 };
 
 const MySubmissions = ({ user, formGroups, ungroupedSubmissions }: MySubmissionsProps) => {
@@ -200,7 +207,12 @@ export const getServerSideProps = withServerSideSession<MySubmissionsProps>(asyn
 
   const _submissions = await fetchUserSubmissions(user.id);
   const submissions = await _submissions.toArray();
-  const serialized = submissions.map(makeSerializable);
+  const serialized = submissions.map(makeSerializable).map(({ _id, form_id, status, comment }) => ({
+    _id,
+    form_id,
+    status,
+    comment,
+  }));
 
   const forms = await Promise.allSettled(FORMS.map((slug) => formium.getFormBySlug(slug)));
   const formNames: { [key: string]: string } = {};
@@ -211,8 +223,8 @@ export const getServerSideProps = withServerSideSession<MySubmissionsProps>(asyn
   });
 
   // Group submissions by form
-  const byForm: { [formId: string]: SerializableSubmission[] } = {};
-  const ungroupedSubmissions: SerializableSubmission[] = [];
+  const byForm: { [formId: string]: UserSubmission[] } = {};
+  const ungroupedSubmissions: UserSubmission[] = [];
 
   for (const sub of serialized) {
     if (FORMS.includes(sub.form_id)) {
