@@ -120,10 +120,10 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
           {submission.status === SubmissionStatus.ACCEPTED && (
             <Icon as={HiCheck} color="green.500" />
           )}
-          {submission.status === SubmissionStatus.MARKED_ORANGE && <Icon as={HiFlag} color="orange.500" />}
-          {submission.status === SubmissionStatus.MARKED_YELLOW && <Icon as={HiFlag} color="yellow.500" />}
-          {submission.status === SubmissionStatus.MARKED_BLUE && <Icon as={HiFlag} color="blue.500" />}
-          {submission.status === SubmissionStatus.MARKED_PURPLE && <Icon as={HiFlag} color="purple.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_ORANGE && <Icon as={HiFlag} color="orange.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_YELLOW && <Icon as={HiFlag} color="yellow.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_BLUE && <Icon as={HiFlag} color="blue.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_PURPLE && <Icon as={HiFlag} color="purple.500" />}
           {submission.status === SubmissionStatus.REJECTED && <Icon as={HiX} color="red.500" />}
         </HStack>
       </Link>
