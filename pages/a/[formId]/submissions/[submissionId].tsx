@@ -300,7 +300,7 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
 
     const listSub = submissions.find((x) => x._id === sub._id);
     if (listSub) listSub.status = status;
-    setSub({ ...sub, status });
+    setSub({ ...sub, status, comment: comment ?? sub.comment });
     setSubs(submissions);
   };
 
