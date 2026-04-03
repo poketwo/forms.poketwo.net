@@ -31,10 +31,11 @@ import { Form } from "@formium/types";
 import { FormEvent, ReactElement, useEffect, useState } from "react";
 import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 
-import SubmissionContent, { PriorRejectionItem } from "~components/SubmissionContent";
+import Link from "next/link";
+import SubmissionContent from "~components/SubmissionContent";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
-import { fetchSubmission, fetchSubmissions, fetchUserRejectedSubmissions } from "~helpers/db";
+import { fetchSubmission, fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
@@ -141,70 +142,81 @@ const MarkColorIconButton = ({ status, onSetStatus }: MarkColorIconButtonProps) 
 
 type SubmissionHeaderProps = {
   submission: SerializableSubmission;
+  formSlug: string;
   onSetStatus: (status: SubmissionStatus) => Promise<void> | void;
 };
 
-const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) => {
+const SubmissionHeader = ({ submission, formSlug, onSetStatus }: SubmissionHeaderProps) => {
   const [name, discrim] = submission.user_tag.split("#", 2);
 
   return (
-    <HStack spacing={2}>
-      <Stack
-        flex="1"
-        spacing={{ base: 0, lg: 2 }}
-        direction={{ base: "column", lg: "row" }}
-        alignItems={{ base: "flex-start", lg: "center" }}
-      >
-        <Heading size="md">
-          {name}
-          <chakra.span color="gray.500" fontWeight="medium">
-            #{discrim}
-          </chakra.span>
-        </Heading>
+    <Stack spacing={2}>
+      <HStack spacing={2}>
+        <Stack
+          flex="1"
+          spacing={{ base: 0, lg: 2 }}
+          direction={{ base: "column", lg: "row" }}
+          alignItems={{ base: "flex-start", lg: "center" }}
+        >
+          <Heading size="md">
+            {name}
+            <chakra.span color="gray.500" fontWeight="medium">
+              #{discrim}
+            </chakra.span>
+          </Heading>
 
+          <Link href={`/a/${formSlug}/submissions?userId=${submission.user_id}`} passHref legacyBehavior>
+            <Text as="a" fontSize="sm" color="blue.500" _hover={{ textDecoration: "underline" }}>
+              {submission.user_id} — View all submissions
+            </Text>
+          </Link>
+        </Stack>
+
+        <LightMode>
+          <HeaderButton
+            colorScheme="green"
+            isDisabled={submission.status === SubmissionStatus.ACCEPTED}
+            icon={<HiCheck />}
+            label="Accept"
+            onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
+          />
+          <Popover>
+            <PopoverTrigger>
+              <div>
+                <HeaderButton
+                  colorScheme={COLORS[submission.status ?? SubmissionStatus.UNDER_REVIEW]}
+                  icon={<HiFlag />}
+                  label="Mark for Review"
+                />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent>
+              <PopoverBody>
+                <HStack>
+                  <MarkColorIconButton status={SubmissionStatus.MARKED_ORANGE} onSetStatus={onSetStatus} />
+                  <MarkColorIconButton status={SubmissionStatus.MARKED_YELLOW} onSetStatus={onSetStatus} />
+                  <MarkColorIconButton status={SubmissionStatus.MARKED_BLUE} onSetStatus={onSetStatus} />
+                  <MarkColorIconButton status={SubmissionStatus.MARKED_PURPLE} onSetStatus={onSetStatus} />
+                </HStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+          <HeaderButton
+            colorScheme="red"
+            isDisabled={submission.status === SubmissionStatus.REJECTED}
+            icon={<HiX />}
+            label="Reject"
+            onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
+          />
+        </LightMode>
+      </HStack>
+
+      {submission.comment && (
         <Text fontSize="sm" color="gray.500">
-          {submission.user_id}
+          {submission.comment}
         </Text>
-      </Stack>
-
-      <LightMode>
-        <HeaderButton
-          colorScheme="green"
-          isDisabled={submission.status === SubmissionStatus.ACCEPTED}
-          icon={<HiCheck />}
-          label="Accept"
-          onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
-        />
-        <Popover>
-          <PopoverTrigger>
-            <div>
-              <HeaderButton
-                colorScheme={COLORS[submission.status ?? SubmissionStatus.UNDER_REVIEW]}
-                icon={<HiFlag />}
-                label="Mark for Review"
-              />
-            </div>
-          </PopoverTrigger>
-          <PopoverContent>
-            <PopoverBody>
-              <HStack>
-                <MarkColorIconButton status={SubmissionStatus.MARKED_ORANGE} onSetStatus={onSetStatus} />
-                <MarkColorIconButton status={SubmissionStatus.MARKED_YELLOW} onSetStatus={onSetStatus} />
-                <MarkColorIconButton status={SubmissionStatus.MARKED_BLUE} onSetStatus={onSetStatus} />
-                <MarkColorIconButton status={SubmissionStatus.MARKED_PURPLE} onSetStatus={onSetStatus} />
-              </HStack>
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
-        <HeaderButton
-          colorScheme="red"
-          isDisabled={submission.status === SubmissionStatus.REJECTED}
-          icon={<HiX />}
-          label="Reject"
-          onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
-        />
-      </LightMode>
-    </HStack>
+      )}
+    </Stack>
   );
 };
 
@@ -265,10 +277,9 @@ type SubmissionPageProps = {
   form: Form;
   submissions: SerializableSubmission[];
   submission: SerializableSubmission;
-  priorRejections: PriorRejectionItem[];
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, priorRejections }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -317,10 +328,10 @@ const SubmissionPage = ({ user, form, submissions, submission, priorRejections }
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
-          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
+          <SubmissionHeader submission={sub} formSlug={form.slug} onSetStatus={handleSetStatus} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
-          <SubmissionContent key={form.id} form={form} submission={sub} priorRejections={priorRejections} />
+          <SubmissionContent key={form.id} form={form} submission={sub} />
         </Box>
       </Flex>
       <CommentModal
@@ -372,17 +383,6 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
 
     if (!submission) return { notFound: true };
 
-    const _priorRejections = await fetchUserRejectedSubmissions(
-      form.slug,
-      submission.user_id.toString(),
-      submission._id.toString()
-    );
-    const priorRejections: PriorRejectionItem[] = _priorRejections.map((s) => ({
-      _id: s._id.toString(),
-      comment: s.comment ?? null,
-      reviewer_id: s.reviewer_id?.toString() ?? null,
-    }));
-
     return {
       props: {
         id: formId,
@@ -390,7 +390,6 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         user,
         submissions: submissions.map(makeSerializable),
         submission: makeSerializable(submission),
-        priorRejections,
       },
     };
   },

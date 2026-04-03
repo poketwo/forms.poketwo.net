@@ -1,12 +1,11 @@
 import { Box, Flex, Heading, HStack, Tag, Text, useColorModeValue } from "@chakra-ui/react";
 import { Form } from "@formium/types";
 
-import SubmissionContent, { PriorRejectionItem } from "~components/SubmissionContent";
+import SubmissionContent from "~components/SubmissionContent";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import {
   fetchSubmission,
   fetchUserFormSubmissions,
-  fetchUserRejectedSubmissions,
 } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
@@ -46,7 +45,6 @@ type UserSubmissionPageProps = {
   form: Form;
   submissions: SerializableSubmission[];
   submission: SerializableSubmission;
-  priorRejections: PriorRejectionItem[];
 };
 
 const UserSubmissionPage = ({
@@ -54,7 +52,6 @@ const UserSubmissionPage = ({
   form,
   submissions,
   submission,
-  priorRejections,
 }: UserSubmissionPageProps) => {
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
@@ -91,8 +88,6 @@ const UserSubmissionPage = ({
             key={form.id}
             form={form}
             submission={submission}
-            priorRejections={priorRejections}
-            showReviewerIds={false}
           />
         </Box>
       </Flex>
@@ -139,17 +134,6 @@ export const getServerSideProps = withServerSideSession<UserSubmissionPageProps,
     });
     const submissions = await _submissions.toArray();
 
-    const _priorRejections = await fetchUserRejectedSubmissions(
-      form.slug,
-      user.id,
-      submission._id.toString()
-    );
-    const priorRejections: PriorRejectionItem[] = _priorRejections.map((s) => ({
-      _id: s._id.toString(),
-      comment: s.comment ?? null,
-      reviewer_id: null,
-    }));
-
     return {
       props: {
         form,
@@ -164,7 +148,6 @@ export const getServerSideProps = withServerSideSession<UserSubmissionPageProps,
           reviewer_id: null,
           email: null,
         },
-        priorRejections,
       },
     };
   },
