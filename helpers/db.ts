@@ -185,6 +185,13 @@ export const fetchSubmissions = async <T = any>(
   return cursor;
 };
 
+export const fetchUserSubmissions = async <T = any>(userId: string) => {
+  const db = await dbPromise;
+  const collection = db.collection("submission");
+  const query = { user_id: Long.fromString(userId) };
+  return collection.find<Submission<T>>(query).sort({ _id: -1 });
+};
+
 export const fetchUserRejectedSubmissions = async (
   formId: string,
   userId: string,
