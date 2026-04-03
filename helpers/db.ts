@@ -210,6 +210,24 @@ export const fetchUserRejectedSubmissions = async (
   return collection.find<Submission>(query).sort({ _id: -1 }).toArray();
 };
 
+export const fetchUserFormSubmissions = async <T = any>(
+  formId: string,
+  userId: string,
+  options?: { page?: number }
+) => {
+  const db = await dbPromise;
+  const collection = db.collection("submission");
+  const query = {
+    form_id: formId,
+    user_id: Long.fromString(userId),
+  };
+  let cursor = collection.find<Submission<T>>(query).sort({ _id: -1 });
+  if (options?.page) {
+    cursor = cursor.limit(100).skip(100 * (options.page - 1));
+  }
+  return cursor;
+};
+
 export const createSubmission = async <T = any>(submission: Omit<Submission<T>, "_id">) => {
   const db = await dbPromise;
   const collection = db.collection("submission");

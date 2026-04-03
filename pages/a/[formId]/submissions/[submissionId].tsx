@@ -2,8 +2,6 @@ import {
   Box,
   Button,
   ButtonProps,
-  Code,
-  Divider,
   Flex,
   FormControl,
   FormHelperText,
@@ -21,12 +19,9 @@ import {
   ModalOverlay,
   Popover,
   PopoverBody,
-  PopoverCloseButton,
   PopoverContent,
   PopoverTrigger,
-  Portal,
   Stack,
-  Tag,
   Text,
   Textarea,
   chakra,
@@ -36,6 +31,7 @@ import { Form } from "@formium/types";
 import { FormEvent, ReactElement, useEffect, useState } from "react";
 import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 
+import SubmissionContent, { PriorRejectionItem } from "~components/SubmissionContent";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserRejectedSubmissions } from "~helpers/db";
@@ -212,82 +208,6 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
   );
 };
 
-type PriorRejection = {
-  _id: string;
-  comment: string | null;
-  reviewer_id: string | null;
-};
-
-type SubmissionContentProps = {
-  form: Form;
-  submission: SerializableSubmission;
-  priorRejections: PriorRejection[];
-};
-
-const SubmissionContent = ({ form, submission, priorRejections }: SubmissionContentProps) => {
-  const fieldNames = Object.values(form.schema?.fields ?? {}).reduce(
-    (acc, val) => acc.set(val.slug, val.title),
-    new Map<string, string | undefined>()
-  );
-
-  const ownedFields = [...fieldNames.keys()].filter((x) => submission.data.hasOwnProperty(x));
-  const otherFields = Object.keys(submission.data).filter((x) => !ownedFields.includes(x));
-  const bg = useColorModeValue("white", "gray.800");
-  const shadow = useColorModeValue("base", "md");
-
-  return (
-    <Stack spacing="4">
-      {ownedFields.map((x) => (
-        <Stack key={x} shadow={shadow} bg={bg} rounded="md" p="4" alignItems="flex-start">
-          <Text
-            fontWeight="bold"
-            _after={{
-              content: `"${x}"`,
-              ml: 2,
-              color: "gray.500",
-              fontWeight: "normal",
-              fontSize: "sm",
-            }}
-          >
-            {fieldNames.get(x)}
-          </Text>
-
-          <Text>{submission.data[x]}</Text>
-        </Stack>
-      ))}
-
-      {otherFields.length > 0 && <Divider />}
-
-      {otherFields.map((x) => (
-        <Stack key={x} alignItems="flex-start">
-          <Code fontWeight="bold">{x}</Code>
-          <Text>{submission.data[x]}</Text>
-        </Stack>
-      ))}
-
-      {priorRejections.length > 0 && (
-        <>
-          <Divider />
-          <Heading size="sm">Prior Rejections</Heading>
-          {priorRejections.map((r) => (
-            <Stack key={r._id} shadow={shadow} bg={bg} rounded="md" p="4" alignItems="flex-start">
-              <HStack>
-                <Tag colorScheme="red" size="sm">Rejected</Tag>
-                {r.reviewer_id && (
-                  <Text fontSize="sm" color="gray.500">
-                    by {r.reviewer_id}
-                  </Text>
-                )}
-              </HStack>
-              <Text>{r.comment ?? "No comment provided."}</Text>
-            </Stack>
-          ))}
-        </>
-      )}
-    </Stack>
-  );
-};
-
 type CommentModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -345,7 +265,7 @@ type SubmissionPageProps = {
   form: Form;
   submissions: SerializableSubmission[];
   submission: SerializableSubmission;
-  priorRejections: PriorRejection[];
+  priorRejections: PriorRejectionItem[];
 };
 
 const SubmissionPage = ({ user, form, submissions, submission, priorRejections }: SubmissionPageProps) => {
@@ -457,7 +377,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
       submission.user_id.toString(),
       submission._id.toString()
     );
-    const priorRejections: PriorRejection[] = _priorRejections.map((s) => ({
+    const priorRejections: PriorRejectionItem[] = _priorRejections.map((s) => ({
       _id: s._id.toString(),
       comment: s.comment ?? null,
       reviewer_id: s.reviewer_id?.toString() ?? null,
