@@ -16,6 +16,7 @@ import {
   Input,
   Select,
   Stack,
+  Tag,
   Text,
   useColorModeValue,
   useDisclosure,
@@ -41,17 +42,49 @@ const SORT_ORDER: { [key in SubmissionStatus]: number } = {
   [SubmissionStatus.REJECTED]: 6,
 };
 
+const STATUS_LABELS: { [key in SubmissionStatus]: string } = {
+  [SubmissionStatus.UNDER_REVIEW]: "Under Review",
+  [SubmissionStatus.ACCEPTED]: "Accepted",
+  [SubmissionStatus.REJECTED]: "Rejected",
+  [SubmissionStatus.MARKED_ORANGE]: "Under Review",
+  [SubmissionStatus.MARKED_YELLOW]: "Under Review",
+  [SubmissionStatus.MARKED_BLUE]: "Under Review",
+  [SubmissionStatus.MARKED_PURPLE]: "Under Review",
+};
+
+const STATUS_COLORS: { [key in SubmissionStatus]: string } = {
+  [SubmissionStatus.UNDER_REVIEW]: "yellow",
+  [SubmissionStatus.ACCEPTED]: "green",
+  [SubmissionStatus.REJECTED]: "red",
+  [SubmissionStatus.MARKED_ORANGE]: "yellow",
+  [SubmissionStatus.MARKED_YELLOW]: "yellow",
+  [SubmissionStatus.MARKED_BLUE]: "yellow",
+  [SubmissionStatus.MARKED_PURPLE]: "yellow",
+};
+
+const getDateFromObjectId = (id: string): string => {
+  const timestamp = parseInt(id.substring(0, 8), 16) * 1000;
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
 type SubmissionItemProps = {
   submission: SerializableSubmission;
+  baseHref: string;
+  userMode?: boolean;
 };
 
 const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
-  ({ submission }: SubmissionItemProps, ref) => {
+  ({ submission, baseHref, userMode }: SubmissionItemProps, ref) => {
     const { query, asPath } = useRouter();
     const { formId, submissionId, ...newQuery } = query;
 
-    const href = `/a/${formId}/submissions/${submission._id}?${querystring.stringify(newQuery)}`;
+    const href = `${baseHref}/${submission._id}?${querystring.stringify(newQuery)}`;
     const activeBg = useColorModeValue("gray.100", "gray.700");
+    const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
 
     return (
       <Link href={href} passHref legacyBehavior>
@@ -60,24 +93,37 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
           px="6"
           py="1"
           transition="all 0.2s"
-          bg={asPath.startsWith(href) ? activeBg : undefined}
+          bg={asPath.startsWith(href.split("?")[0]) ? activeBg : undefined}
           _hover={{ backgroundColor: activeBg }}
           ref={ref}
         >
           <Box flex="1">
-            <Text fontWeight="bold">{submission.user_tag}</Text>
-            <Text color="gray.500" isTruncated>
-              {submission.user_id}
-            </Text>
+            {userMode ? (
+              <>
+                <Text fontWeight="bold">{getDateFromObjectId(submission._id)}</Text>
+                <Text color="gray.500" fontSize="sm">
+                  <Tag size="sm" colorScheme={STATUS_COLORS[status]}>
+                    {STATUS_LABELS[status]}
+                  </Tag>
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text fontWeight="bold">{submission.user_tag}</Text>
+                <Text color="gray.500" isTruncated>
+                  {submission.user_id}
+                </Text>
+              </>
+            )}
           </Box>
 
           {submission.status === SubmissionStatus.ACCEPTED && (
             <Icon as={HiCheck} color="green.500" />
           )}
-          {submission.status === SubmissionStatus.MARKED_ORANGE && <Icon as={HiFlag} color="orange.500" />}
-          {submission.status === SubmissionStatus.MARKED_YELLOW && <Icon as={HiFlag} color="yellow.500" />}
-          {submission.status === SubmissionStatus.MARKED_BLUE && <Icon as={HiFlag} color="blue.500" />}
-          {submission.status === SubmissionStatus.MARKED_PURPLE && <Icon as={HiFlag} color="purple.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_ORANGE && <Icon as={HiFlag} color="orange.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_YELLOW && <Icon as={HiFlag} color="yellow.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_BLUE && <Icon as={HiFlag} color="blue.500" />}
+          {!userMode && submission.status === SubmissionStatus.MARKED_PURPLE && <Icon as={HiFlag} color="purple.500" />}
           {submission.status === SubmissionStatus.REJECTED && <Icon as={HiX} color="red.500" />}
         </HStack>
       </Link>
@@ -143,6 +189,8 @@ type SubmissionsLayoutProps = MainLayoutProps & {
   form: Form;
   submissions: SerializableSubmission[];
   submission?: SerializableSubmission;
+  baseHref?: string;
+  userMode?: boolean;
 };
 
 const SubmissionsLayout = ({
@@ -152,21 +200,25 @@ const SubmissionsLayout = ({
   submission,
   contentContainerProps,
   children,
+  baseHref: baseHrefProp,
+  userMode,
 }: SubmissionsLayoutProps) => {
   const { query } = useRouter();
   const page = Number(query.page ?? 1);
-  const href = `/a/${query.formId}/submissions`;
+  const baseHref = baseHrefProp ?? `/a/${query.formId}/submissions`;
 
   const ref = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(
     () =>
-      [...submissions].sort(
-        (a, b) =>
-          SORT_ORDER[a.status ?? SubmissionStatus.UNDER_REVIEW] -
-          SORT_ORDER[b.status ?? SubmissionStatus.UNDER_REVIEW],
-      ),
-    [submissions],
+      userMode
+        ? submissions
+        : [...submissions].sort(
+            (a, b) =>
+              SORT_ORDER[a.status ?? SubmissionStatus.UNDER_REVIEW] -
+              SORT_ORDER[b.status ?? SubmissionStatus.UNDER_REVIEW],
+          ),
+    [submissions, userMode],
   );
 
   useEffect(() => {
@@ -204,16 +256,18 @@ const SubmissionsLayout = ({
             <DrawerHeader>{form.name}</DrawerHeader>
             <DrawerBody px="0">
               <Stack spacing={4}>
-                <FilterForm />
+                {!userMode && <FilterForm />}
                 <Stack h="full" spacing="0" divider={<Divider />}>
                   {sorted.map((x) => (
                     <SubmissionItem
                       key={x._id}
                       submission={x}
+                      baseHref={baseHref}
+                      userMode={userMode}
                       ref={x._id === submission?._id ? ref : undefined}
                     />
                   ))}
-                  <Pagination page={page} href={href} count={sorted.length} />
+                  <Pagination page={page} href={baseHref} count={sorted.length} />
                 </Stack>
               </Stack>
             </DrawerBody>
@@ -231,23 +285,25 @@ const SubmissionsLayout = ({
           display={{ base: "none", lg: "flex" }}
         >
           <Stack py="4" spacing="4">
-            <Link href={href} passHref legacyBehavior>
+            <Link href={baseHref} passHref legacyBehavior>
               <Heading as="a" mx="6" size="md">
                 {form.name}
               </Heading>
             </Link>
-            <FilterForm />
+            {!userMode && <FilterForm />}
           </Stack>
 
           {sorted.map((x) => (
             <SubmissionItem
               key={x._id}
               submission={x}
+              baseHref={baseHref}
+              userMode={userMode}
               ref={x._id === submission?._id ? ref : undefined}
             />
           ))}
 
-          <Pagination page={page} href={href} count={sorted.length} />
+          <Pagination page={page} href={baseHref} count={sorted.length} />
         </Stack>
 
         <Box flex="1" p="6" overflow="auto" {...contentContainerProps}>
