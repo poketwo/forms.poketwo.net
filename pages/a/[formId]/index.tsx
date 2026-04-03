@@ -66,14 +66,23 @@ const getCooldownText = (submissionTimestamp: number | null): string | null => {
   const now = new Date();
   if (now >= cooldownEnd) return null;
 
-  const diffMs = cooldownEnd.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays > 30) {
-    const months = Math.ceil(diffDays / 30);
-    return `You can submit again in approximately ${months} month${months === 1 ? "" : "s"}.`;
+  let remaining = new Date(cooldownEnd);
+  let months = 0;
+  const temp = new Date(now);
+  while (true) {
+    temp.setMonth(temp.getMonth() + 1);
+    if (temp > remaining) break;
+    months++;
   }
-  return `You can submit again in ${diffDays} day${diffDays === 1 ? "" : "s"}.`;
+  temp.setMonth(temp.getMonth() - 1);
+  const days = Math.ceil((remaining.getTime() - temp.getTime()) / (1000 * 60 * 60 * 24));
+
+  const parts: string[] = [];
+  if (months > 0) parts.push(`${months} month${months === 1 ? "" : "s"}`);
+  if (days > 0) parts.push(`${days} day${days === 1 ? "" : "s"}`);
+  const timeLeft = parts.join(" and ");
+
+  return timeLeft ? `You can submit again in ${timeLeft}.` : null;
 };
 
 type SuccessProps = {
@@ -90,20 +99,24 @@ const Success = ({ form, status, submissionTimestamp }: SuccessProps) => {
       <Alert
         maxW="3xl"
         mx="auto"
-        p="8"
+        p="10"
         status={ALERT_STATUS[status][0]}
         flexDirection="column"
         textAlign="center"
         rounded="lg"
+        variant="left-accent"
+        borderLeftWidth="6px"
       >
-        <AlertIcon boxSize="40px" mr={0} />
-        <AlertTitle mt={4} mb={1} fontSize="lg">
+        <AlertIcon boxSize="50px" mr={0} />
+        <AlertTitle mt={4} mb={2} fontSize="xl" fontWeight="bold">
           {ALERT_STATUS[status][1](form)}
         </AlertTitle>
-        <AlertDescription maxW="sm">{ALERT_STATUS[status][2](form)}</AlertDescription>
+        <AlertDescription fontSize="md" maxW="md">
+          {ALERT_STATUS[status][2](form)}
+        </AlertDescription>
         {cooldownText && (
-          <Text mt="3" fontSize="sm" color="gray.500">
-            {cooldownText}
+          <Text mt="4" fontSize="sm" fontWeight="medium" color="gray.600">
+            {cooldownText} ({COOLDOWN_MONTHS}-month wait period)
           </Text>
         )}
       </Alert>
