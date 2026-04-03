@@ -22,6 +22,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   Stack,
+  Tag,
   Text,
   Textarea,
   chakra,
@@ -35,7 +36,7 @@ import Link from "next/link";
 import SubmissionContent from "~components/SubmissionContent";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
-import { fetchSubmission, fetchSubmissions } from "~helpers/db";
+import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
@@ -142,11 +143,10 @@ const MarkColorIconButton = ({ status, onSetStatus }: MarkColorIconButtonProps) 
 
 type SubmissionHeaderProps = {
   submission: SerializableSubmission;
-  formSlug: string;
   onSetStatus: (status: SubmissionStatus) => Promise<void> | void;
 };
 
-const SubmissionHeader = ({ submission, formSlug, onSetStatus }: SubmissionHeaderProps) => {
+const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) => {
   const [name, discrim] = submission.user_tag.split("#", 2);
 
   return (
@@ -165,11 +165,9 @@ const SubmissionHeader = ({ submission, formSlug, onSetStatus }: SubmissionHeade
             </chakra.span>
           </Heading>
 
-          <Link href={`/a/${formSlug}/submissions?userId=${submission.user_id}`} passHref legacyBehavior>
-            <Text as="a" fontSize="sm" color="blue.500" _hover={{ textDecoration: "underline" }}>
-              {submission.user_id} — View all submissions
-            </Text>
-          </Link>
+          <Text fontSize="sm" color="gray.500">
+            {submission.user_id}
+          </Text>
         </Stack>
 
         <LightMode>
@@ -217,6 +215,75 @@ const SubmissionHeader = ({ submission, formSlug, onSetStatus }: SubmissionHeade
         </Text>
       )}
     </Stack>
+  );
+};
+
+const STATUS_LABELS: { [key in SubmissionStatus]: string } = {
+  [SubmissionStatus.UNDER_REVIEW]: "Under Review",
+  [SubmissionStatus.ACCEPTED]: "Accepted",
+  [SubmissionStatus.REJECTED]: "Rejected",
+  [SubmissionStatus.MARKED_ORANGE]: "Under Review",
+  [SubmissionStatus.MARKED_YELLOW]: "Under Review",
+  [SubmissionStatus.MARKED_BLUE]: "Under Review",
+  [SubmissionStatus.MARKED_PURPLE]: "Under Review",
+};
+
+const STATUS_COLORS: { [key in SubmissionStatus]: string } = {
+  [SubmissionStatus.UNDER_REVIEW]: "yellow",
+  [SubmissionStatus.ACCEPTED]: "green",
+  [SubmissionStatus.REJECTED]: "red",
+  [SubmissionStatus.MARKED_ORANGE]: "yellow",
+  [SubmissionStatus.MARKED_YELLOW]: "yellow",
+  [SubmissionStatus.MARKED_BLUE]: "yellow",
+  [SubmissionStatus.MARKED_PURPLE]: "yellow",
+};
+
+const getDateFromObjectId = (id: string): string => {
+  const timestamp = parseInt(id.substring(0, 8), 16) * 1000;
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+type PreviousSubmissionCardProps = {
+  submission: SerializableSubmission;
+  formSlug: string;
+};
+
+const PreviousSubmissionCard = ({ submission, formSlug }: PreviousSubmissionCardProps) => {
+  const bg = useColorModeValue("white", "gray.800");
+  const shadow = useColorModeValue("base", "md");
+  const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
+
+  return (
+    <Link href={`/a/${formSlug}/submissions/${submission._id}`} passHref legacyBehavior>
+      <HStack
+        as="a"
+        shadow={shadow}
+        bg={bg}
+        rounded="md"
+        px="4"
+        py="3"
+        spacing="4"
+        _hover={{ shadow: "lg" }}
+        transition="all 0.2s"
+        cursor="pointer"
+      >
+        <Text fontWeight="bold" flex="1">
+          {getDateFromObjectId(submission._id)}
+        </Text>
+        <Tag size="sm" colorScheme={STATUS_COLORS[status]}>
+          {STATUS_LABELS[status]}
+        </Tag>
+        {submission.comment && (
+          <Text fontSize="sm" color="gray.500" noOfLines={1} maxW="300px">
+            {submission.comment}
+          </Text>
+        )}
+      </HStack>
+    </Link>
   );
 };
 
@@ -277,9 +344,10 @@ type SubmissionPageProps = {
   form: Form;
   submissions: SerializableSubmission[];
   submission: SerializableSubmission;
+  userSubmissions: SerializableSubmission[];
 };
 
-const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, userSubmissions }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -328,10 +396,21 @@ const SubmissionPage = ({ user, form, submissions, submission }: SubmissionPageP
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
-          <SubmissionHeader submission={sub} formSlug={form.slug} onSetStatus={handleSetStatus} />
+          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
           <SubmissionContent key={form.id} form={form} submission={sub} />
+
+          {userSubmissions.length > 0 && (
+            <Stack spacing="2" mt="6">
+              <Heading size="sm" color="gray.500">
+                Previous Submissions by This User
+              </Heading>
+              {userSubmissions.map((s) => (
+                <PreviousSubmissionCard key={s._id} submission={s} formSlug={form.slug} />
+              ))}
+            </Stack>
+          )}
         </Box>
       </Flex>
       <CommentModal
@@ -383,6 +462,12 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
 
     if (!submission) return { notFound: true };
 
+    // Fetch other submissions by same user for this form (excluding current)
+    const _userSubmissions = await fetchUserFormSubmissions(form.slug, submission.user_id.toString());
+    const userSubmissions = (await _userSubmissions.toArray())
+      .filter((s) => s._id.toString() !== submissionId)
+      .map(makeSerializable);
+
     return {
       props: {
         id: formId,
@@ -390,6 +475,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         user,
         submissions: submissions.map(makeSerializable),
         submission: makeSerializable(submission),
+        userSubmissions,
       },
     };
   },
