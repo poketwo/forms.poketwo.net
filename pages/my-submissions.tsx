@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  Collapse,
   Divider,
   Heading,
   HStack,
@@ -11,7 +12,8 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import Link from "next/link";
-import { HiChevronRight } from "react-icons/hi";
+import { useState } from "react";
+import { HiChevronDown, HiChevronRight } from "react-icons/hi";
 
 import MainLayout from "~components/layouts/MainLayout";
 import { fetchUserSubmissions } from "~helpers/db";
@@ -24,6 +26,7 @@ type UserSubmission = {
   form_id: string;
   status: SubmissionStatus | null;
   comment: string | null;
+  data: Record<string, string>;
 };
 
 const FORMS = ["moderator-application", "ban-appeal", "suspension-appeal"];
@@ -109,6 +112,7 @@ const PriorRejection = ({ submission }: PriorRejectionProps) => {
 type FormGroup = {
   formSlug: string;
   formName: string;
+  fieldNames: Record<string, string>;
   latest: UserSubmission;
   priorRejections: UserSubmission[];
 };
@@ -117,10 +121,48 @@ type FormGroupCardProps = {
   group: FormGroup;
 };
 
+const SubmissionAnswers = ({
+  data,
+  fieldNames,
+}: {
+  data: Record<string, string>;
+  fieldNames: Record<string, string>;
+}) => {
+  const knownFields = Object.keys(fieldNames).filter((key) => data.hasOwnProperty(key));
+  const otherFields = Object.keys(data).filter((key) => !knownFields.includes(key));
+
+  return (
+    <Stack spacing="3">
+      {knownFields.map((key) => (
+        <Box key={key}>
+          <Text fontSize="xs" fontWeight="semibold" color="gray.500">
+            {fieldNames[key]}
+          </Text>
+          <Text fontSize="sm" whiteSpace="pre-wrap">
+            {data[key]}
+          </Text>
+        </Box>
+      ))}
+      {otherFields.map((key) => (
+        <Box key={key}>
+          <Text fontSize="xs" fontWeight="semibold" color="gray.500">
+            {key}
+          </Text>
+          <Text fontSize="sm" whiteSpace="pre-wrap">
+            {data[key]}
+          </Text>
+        </Box>
+      ))}
+    </Stack>
+  );
+};
+
 const FormGroupCard = ({ group }: FormGroupCardProps) => {
   const shadow = useColorModeValue("base", "md");
   const bg = useColorModeValue("white", "gray.800");
+  const answersBg = useColorModeValue("gray.50", "gray.700");
   const latestStatus = group.latest.status ?? SubmissionStatus.UNDER_REVIEW;
+  const [showAnswers, setShowAnswers] = useState(false);
 
   return (
     <Stack shadow={shadow} bg={bg} rounded="md" p="4" spacing="4">
@@ -143,6 +185,24 @@ const FormGroupCard = ({ group }: FormGroupCardProps) => {
           </Text>
           <Text fontSize="sm">{group.latest.comment}</Text>
         </Box>
+      )}
+
+      {Object.keys(group.latest.data).length > 0 && (
+        <>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowAnswers(!showAnswers)}
+            rightIcon={showAnswers ? <HiChevronDown /> : <HiChevronRight />}
+          >
+            {showAnswers ? "Hide My Answers" : "View My Answers"}
+          </Button>
+          <Collapse in={showAnswers} animateOpacity>
+            <Box bg={answersBg} rounded="md" p="4">
+              <SubmissionAnswers data={group.latest.data} fieldNames={group.fieldNames} />
+            </Box>
+          </Collapse>
+        </>
       )}
 
       {latestStatus === SubmissionStatus.REJECTED && (
@@ -207,18 +267,28 @@ export const getServerSideProps = withServerSideSession<MySubmissionsProps>(asyn
 
   const _submissions = await fetchUserSubmissions(user.id);
   const submissions = await _submissions.toArray();
-  const serialized = submissions.map(makeSerializable).map(({ _id, form_id, status, comment }) => ({
+  const serialized = submissions.map(makeSerializable).map(({ _id, form_id, status, comment, data }) => ({
     _id,
     form_id,
     status,
     comment,
+    data: data as Record<string, string>,
   }));
 
   const forms = await Promise.allSettled(FORMS.map((slug) => formium.getFormBySlug(slug)));
   const formNames: { [key: string]: string } = {};
+  const formFieldNames: { [formSlug: string]: Record<string, string> } = {};
   forms.forEach((result, i) => {
     if (result.status === "fulfilled") {
       formNames[FORMS[i]] = result.value.name;
+      const fields: Record<string, string> = {};
+      for (const field of Object.values(result.value.schema?.fields ?? {})) {
+        const f = field as { slug: string; title?: string };
+        if (f.slug && f.title) {
+          fields[f.slug] = f.title;
+        }
+      }
+      formFieldNames[FORMS[i]] = fields;
     }
   });
 
@@ -249,6 +319,7 @@ export const getServerSideProps = withServerSideSession<MySubmissionsProps>(asyn
     formGroups.push({
       formSlug,
       formName: formNames[formSlug] ?? formSlug,
+      fieldNames: formFieldNames[formSlug] ?? {},
       latest,
       priorRejections,
     });
