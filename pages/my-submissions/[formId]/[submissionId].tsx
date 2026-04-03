@@ -1,4 +1,4 @@
-import { Box, Flex, Heading, HStack, Tag, Text, useColorModeValue } from "@chakra-ui/react";
+import { Alert, AlertDescription, AlertIcon, Box, Flex, Heading, HStack, Tag, Text, useColorModeValue } from "@chakra-ui/react";
 import { Form } from "@formium/types";
 
 import SubmissionContent from "~components/SubmissionContent";
@@ -78,9 +78,18 @@ const UserSubmissionPage = ({
             </Tag>
           </HStack>
           {submission.comment && (
-            <Text mt="2" fontSize="sm" color="gray.500">
-              {submission.comment}
-            </Text>
+            <Alert
+              mt="3"
+              status={status === SubmissionStatus.ACCEPTED ? "success" : status === SubmissionStatus.REJECTED ? "error" : "info"}
+              variant="left-accent"
+              rounded="md"
+              py="3"
+            >
+              <AlertIcon />
+              <AlertDescription fontSize="sm" fontWeight="medium">
+                {submission.comment}
+              </AlertDescription>
+            </Alert>
           )}
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>

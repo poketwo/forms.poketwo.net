@@ -1,4 +1,7 @@
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
   Box,
   Button,
   ButtonProps,
@@ -210,9 +213,18 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
       </HStack>
 
       {submission.comment && (
-        <Text fontSize="sm" color="gray.500">
-          {submission.comment}
-        </Text>
+        <Alert
+          mt="1"
+          status={submission.status === SubmissionStatus.ACCEPTED ? "success" : submission.status === SubmissionStatus.REJECTED ? "error" : "info"}
+          variant="left-accent"
+          rounded="md"
+          py="3"
+        >
+          <AlertIcon />
+          <AlertDescription fontSize="sm" fontWeight="medium">
+            {submission.comment}
+          </AlertDescription>
+        </Alert>
       )}
     </Stack>
   );
