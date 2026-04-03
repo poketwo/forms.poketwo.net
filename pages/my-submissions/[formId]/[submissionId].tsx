@@ -129,8 +129,8 @@ export const getServerSideProps = withServerSideSession<UserSubmissionPageProps,
 
     if (!submission) return { notFound: true };
 
-    // Security: ensure the submission belongs to the current user
-    if (submission.user_id.toString() !== user.id) {
+    // Security: ensure the submission belongs to the current user and the correct form
+    if (submission.user_id.toString() !== user.id || submission.form_id !== form.slug) {
       return { notFound: true };
     }
 
