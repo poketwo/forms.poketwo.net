@@ -1,5 +1,4 @@
 import {
-  Box,
   Code,
   Divider,
   HStack,

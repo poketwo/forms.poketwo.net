@@ -52,6 +52,16 @@ const STATUS_LABELS: { [key in SubmissionStatus]: string } = {
   [SubmissionStatus.MARKED_PURPLE]: "Under Review",
 };
 
+const STATUS_COLORS: { [key in SubmissionStatus]: string } = {
+  [SubmissionStatus.UNDER_REVIEW]: "yellow",
+  [SubmissionStatus.ACCEPTED]: "green",
+  [SubmissionStatus.REJECTED]: "red",
+  [SubmissionStatus.MARKED_ORANGE]: "yellow",
+  [SubmissionStatus.MARKED_YELLOW]: "yellow",
+  [SubmissionStatus.MARKED_BLUE]: "yellow",
+  [SubmissionStatus.MARKED_PURPLE]: "yellow",
+};
+
 const getDateFromObjectId = (id: string): string => {
   const timestamp = parseInt(id.substring(0, 8), 16) * 1000;
   return new Date(timestamp).toLocaleDateString("en-US", {
@@ -92,7 +102,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
               <>
                 <Text fontWeight="bold">{getDateFromObjectId(submission._id)}</Text>
                 <Text color="gray.500" fontSize="sm">
-                  <Tag size="sm" colorScheme={STATUS_LABELS[status] === "Accepted" ? "green" : STATUS_LABELS[status] === "Rejected" ? "red" : "yellow"}>
+                  <Tag size="sm" colorScheme={STATUS_COLORS[status]}>
                     {STATUS_LABELS[status]}
                   </Tag>
                 </Text>
