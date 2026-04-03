@@ -416,7 +416,7 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions }
           {userSubmissions.length > 0 && (
             <Stack spacing="2" mt="6">
               <Heading size="sm" color="gray.500">
-                Previous Submissions by This User
+                Other Submissions by This User
               </Heading>
               {userSubmissions.map((s) => (
                 <PreviousSubmissionCard key={s._id} submission={s} formSlug={form.slug} />
