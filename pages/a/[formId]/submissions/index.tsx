@@ -2,26 +2,32 @@ import { Heading, Stack, Text } from "@chakra-ui/layout";
 import { Form } from "@formium/types";
 
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
-import { fetchSubmissions } from "~helpers/db";
+import { fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { Position, SerializableSubmission, User, makeSerializable } from "~helpers/types";
+import { SerializableSubmission, User, makeSerializable } from "~helpers/types";
 
 type SubmissionsPageProps = {
   user: User;
   form: Form;
   submissions: SerializableSubmission[];
+  isAdmin: boolean;
 };
 
-const SubmissionsPage = ({ user, form, submissions }: SubmissionsPageProps) => {
+const SubmissionsPage = ({ user, form, submissions, isAdmin }: SubmissionsPageProps) => {
   return (
-    <SubmissionsLayout user={user} form={form} submissions={submissions}>
+    <SubmissionsLayout
+      user={user}
+      form={form}
+      submissions={submissions}
+      userMode={!isAdmin}
+    >
       <Stack spacing="4" alignItems="center">
         <Heading size="lg">
           {submissions.length} Submission{submissions.length === 1 ? "" : "s"}
         </Heading>
-        <Text>use the sidebar to view wow</Text>
+        <Text>Select a submission from the sidebar to view details.</Text>
       </Stack>
     </SubmissionsLayout>
   );
@@ -40,11 +46,7 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps, Su
 
     const user = req.session.user;
     const member = req.session.member;
-    if (!user || !member) throw new Error("User not found");
-
-    if (!permittedToViewForm(member, formId)) {
-      return { redirect: { permanent: false, destination: "/dashboard" } };
-    }
+    if (!user) throw new Error("User not found");
 
     let form;
     try {
@@ -56,22 +58,45 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps, Su
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.slug, {
-      page: Number(query.page ?? 1),
-      userId: query.userId?.toString(),
-      status: query.status ? Number(query.status) : { $nin: [1, 2] },
-    });
-    const submissions = await _submissions.toArray();
+    const isAdmin = member ? permittedToViewForm(member, formId) : false;
 
-    return {
-      props: {
-        id: formId,
-        form,
-        user,
-        submissions: submissions.map(makeSerializable),
-      },
-    };
+    if (isAdmin) {
+      // Admin view: show all submissions with filters
+      const _submissions = await fetchSubmissions(form.slug, {
+        page: Number(query.page ?? 1),
+        userId: query.userId?.toString(),
+        status: query.status ? Number(query.status) : { $nin: [1, 2] },
+      });
+      const submissions = await _submissions.toArray();
+
+      return {
+        props: {
+          form,
+          user,
+          submissions: submissions.map(makeSerializable),
+          isAdmin: true,
+        },
+      };
+    } else {
+      // User view: show only their own submissions
+      const _submissions = await fetchUserFormSubmissions(form.slug, user.id, {
+        page: Number(query.page ?? 1),
+      });
+      const submissions = await _submissions.toArray();
+
+      return {
+        props: {
+          form,
+          user,
+          submissions: submissions.map(makeSerializable).map((s) => ({
+            ...s,
+            reviewer_id: null,
+            email: null,
+          })),
+          isAdmin: false,
+        },
+      };
+    }
   },
   AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER
 );

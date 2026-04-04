@@ -29,7 +29,6 @@ import Link from "next/link";
 import { PropsWithChildren } from "react";
 import {
   HiClipboardList,
-  HiCollection,
   HiHome,
   HiLogout,
   HiMoon,
@@ -136,7 +135,6 @@ const NavItem = ({ href, subtle = false, icon, label }: NavItemProps) => {
 const Navigation = () => (
   <Stack spacing="1">
     <NavItem href="/dashboard" icon={<HiHome />} label="Home" />
-    <NavItem href="/my-submissions" icon={<HiCollection />} label="My Submissions" />
     <NavItem
       href="/a/moderator-application"
       icon={<HiClipboardList />}
