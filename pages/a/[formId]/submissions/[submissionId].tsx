@@ -44,7 +44,6 @@ import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
-  Position,
   SerializableSubmission,
   SubmissionStatus,
   User,
@@ -351,15 +350,51 @@ const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
   );
 };
 
+type UserSubmissionHeaderProps = {
+  submission: SerializableSubmission;
+};
+
+const UserSubmissionHeader = ({ submission }: UserSubmissionHeaderProps) => {
+  const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
+
+  return (
+    <Stack spacing={2}>
+      <HStack spacing={2}>
+        <Heading size="md" flex="1">
+          {getDateFromObjectId(submission._id)}
+        </Heading>
+        <Tag size="lg" colorScheme={STATUS_COLORS[status]}>
+          {STATUS_LABELS[status]}
+        </Tag>
+      </HStack>
+      {submission.comment && (
+        <Alert
+          mt="1"
+          status={status === SubmissionStatus.ACCEPTED ? "success" : status === SubmissionStatus.REJECTED ? "error" : "info"}
+          variant="left-accent"
+          rounded="md"
+          py="3"
+        >
+          <AlertIcon />
+          <AlertDescription fontSize="sm" fontWeight="medium">
+            {submission.comment}
+          </AlertDescription>
+        </Alert>
+      )}
+    </Stack>
+  );
+};
+
 type SubmissionPageProps = {
   user: User;
   form: Form;
   submissions: SerializableSubmission[];
   submission: SerializableSubmission;
   userSubmissions: SerializableSubmission[];
+  isAdmin: boolean;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, userSubmissions }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, isAdmin }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -405,15 +440,20 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions }
       submissions={subs}
       submission={submission}
       contentContainerProps={{ p: 0 }}
+      userMode={!isAdmin}
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
-          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
+          {isAdmin ? (
+            <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
+          ) : (
+            <UserSubmissionHeader submission={sub} />
+          )}
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
           <SubmissionContent key={form.id} form={form} submission={sub} />
 
-          {userSubmissions.length > 0 && (
+          {isAdmin && userSubmissions.length > 0 && (
             <Stack spacing="2" mt="6">
               <Heading size="sm" color="gray.500">
                 Other Submissions by This User
@@ -425,11 +465,13 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions }
           )}
         </Box>
       </Flex>
-      <CommentModal
-        isOpen={statusWithComment !== undefined}
-        onClose={() => setStatusWithComment(undefined)}
-        onSubmit={handleSubmit}
-      />
+      {isAdmin && (
+        <CommentModal
+          isOpen={statusWithComment !== undefined}
+          onClose={() => setStatusWithComment(undefined)}
+          onSubmit={handleSubmit}
+        />
+      )}
     </SubmissionsLayout>
   );
 };
@@ -448,11 +490,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
 
     const user = req.session.user;
     const member = req.session.member;
-    if (!user || !member) throw new Error("User not found");
-
-    if (!permittedToViewForm(member, formId)) {
-      return { redirect: { permanent: false, destination: "/dashboard" } };
-    }
+    if (!user) throw new Error("User not found");
 
     let form;
     try {
@@ -464,33 +502,66 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.slug, {
-      page: Number(query.page ?? 1),
-      userId: query.userId?.toString(),
-      status: query.status ? Number(query.status) : { $nin: [1, 2] },
-    });
-    const submissions = await _submissions.toArray();
+    const isAdmin = member ? permittedToViewForm(member, formId) : false;
     const submission = await fetchSubmission(submissionId);
 
     if (!submission) return { notFound: true };
 
-    // Fetch other submissions by same user for this form (excluding current)
-    const _userSubmissions = await fetchUserFormSubmissions(form.slug, submission.user_id.toString());
-    const userSubmissions = (await _userSubmissions.toArray())
-      .filter((s) => s._id.toString() !== submissionId)
-      .map(makeSerializable);
+    if (isAdmin) {
+      // Admin view: show all submissions in sidebar, other submissions by user
+      const _submissions = await fetchSubmissions(form.slug, {
+        page: Number(query.page ?? 1),
+        userId: query.userId?.toString(),
+        status: query.status ? Number(query.status) : { $nin: [1, 2] },
+      });
+      const submissions = await _submissions.toArray();
 
-    return {
-      props: {
-        id: formId,
-        form,
-        user,
-        submissions: submissions.map(makeSerializable),
-        submission: makeSerializable(submission),
-        userSubmissions,
-      },
-    };
+      // Fetch other submissions by same user for this form (excluding current)
+      const _userSubmissions = await fetchUserFormSubmissions(form.slug, submission.user_id.toString());
+      const userSubmissions = (await _userSubmissions.toArray())
+        .filter((s) => s._id.toString() !== submissionId)
+        .map(makeSerializable);
+
+      return {
+        props: {
+          form,
+          user,
+          submissions: submissions.map(makeSerializable),
+          submission: makeSerializable(submission),
+          userSubmissions,
+          isAdmin: true,
+        },
+      };
+    } else {
+      // User view: ensure submission belongs to the current user
+      if (submission.user_id.toString() !== user.id || submission.form_id !== form.slug) {
+        return { notFound: true };
+      }
+
+      const _submissions = await fetchUserFormSubmissions(form.slug, user.id, {
+        page: Number(query.page ?? 1),
+      });
+      const submissions = await _submissions.toArray();
+
+      return {
+        props: {
+          form,
+          user,
+          submissions: submissions.map(makeSerializable).map((s) => ({
+            ...s,
+            reviewer_id: null,
+            email: null,
+          })),
+          submission: {
+            ...makeSerializable(submission),
+            reviewer_id: null,
+            email: null,
+          },
+          userSubmissions: [],
+          isAdmin: false,
+        },
+      };
+    }
   },
   AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER
 );
