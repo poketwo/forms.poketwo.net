@@ -3,7 +3,7 @@ import { Member } from "./types";
 const admin = "718006431231508481";
 const serverManager = "1219500880534179892";
 const botManager = "1219501453240959006";
-const moderator = "724879492622843944";
+const seniorModerator = "1483963509275623444";
 
 const fullAccessRoles: Record<string, string[]> = {
   "moderator-application": [admin, serverManager],
@@ -12,9 +12,9 @@ const fullAccessRoles: Record<string, string[]> = {
 };
 
 const restrictedAccessRoles: Record<string, string[]> = {
-  "moderator-application": [moderator],
-  "ban-appeal": [moderator],
-  "suspension-appeal": [moderator],
+  "moderator-application": [seniorModerator],
+  "ban-appeal": [seniorModerator],
+  "suspension-appeal": [seniorModerator],
 };
 
 export const permittedToViewForm = (member: Member, formId: string) => {
