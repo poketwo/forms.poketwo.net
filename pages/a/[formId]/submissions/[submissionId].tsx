@@ -41,6 +41,7 @@ import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
+import { getFirstPageFieldSlugs } from "~helpers/form";
 import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
@@ -483,15 +484,28 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
       .filter((s) => s._id.toString() !== submissionId)
       .map(makeSerializable);
 
+    const fullAccess = hasFullAccess(member, formId);
+    const serializedSubmission = makeSerializable(submission);
+
+    if (!fullAccess) {
+      const firstPageSlugs = getFirstPageFieldSlugs(form);
+      const filteredData = Object.fromEntries(
+        Object.entries(serializedSubmission.data).filter(
+          ([key]) => !firstPageSlugs.has(key)
+        )
+      );
+      serializedSubmission.data = filteredData;
+    }
+
     return {
       props: {
         id: formId,
         form,
         user,
         submissions: submissions.map(makeSerializable),
-        submission: makeSerializable(submission),
+        submission: serializedSubmission,
         userSubmissions,
-        fullAccess: hasFullAccess(member, formId),
+        fullAccess,
       },
     };
   },
