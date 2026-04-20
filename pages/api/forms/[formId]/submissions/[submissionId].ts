@@ -5,7 +5,7 @@ import { NextApiResponse } from "next";
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 import { fetchSubmission, updateSubmission } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { permittedToViewForm } from "~helpers/permissions";
+import { hasFullAccess } from "~helpers/permissions";
 import { Submission, SubmissionStatus } from "~helpers/types";
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
@@ -56,7 +56,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const member = req.session.member;
   if (!user || !member) return res.status(401);
 
-  if (!permittedToViewForm(member, formId)) return res.status(403).end();
+  if (!hasFullAccess(member, formId)) return res.status(403).end();
 
   const submission = await fetchSubmission(submissionId);
   if (!submission) return res.status(404);

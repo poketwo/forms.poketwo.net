@@ -6,7 +6,7 @@ import { fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
-import { Position, SerializableSubmission, User, makeSerializable } from "~helpers/types";
+import { SerializableSubmission, User, makeSerializable } from "~helpers/types";
 
 type SubmissionsPageProps = {
   user: User;
@@ -72,6 +72,5 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps, Su
       },
     };
   },
-  AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER
+  AuthMode.AUTHENTICATED
 );
