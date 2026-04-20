@@ -41,10 +41,10 @@ import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { permittedToViewForm } from "~helpers/permissions";
+import { getFirstPageFieldSlugs } from "~helpers/form";
+import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
-  Position,
   SerializableSubmission,
   SubmissionStatus,
   User,
@@ -147,9 +147,10 @@ const MarkColorIconButton = ({ status, onSetStatus }: MarkColorIconButtonProps) 
 type SubmissionHeaderProps = {
   submission: SerializableSubmission;
   onSetStatus: (status: SubmissionStatus) => Promise<void> | void;
+  readOnly?: boolean;
 };
 
-const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) => {
+const SubmissionHeader = ({ submission, onSetStatus, readOnly }: SubmissionHeaderProps) => {
   const [name, discrim] = submission.user_tag.split("#", 2);
 
   return (
@@ -173,43 +174,45 @@ const SubmissionHeader = ({ submission, onSetStatus }: SubmissionHeaderProps) =>
           </Text>
         </Stack>
 
-        <LightMode>
-          <HeaderButton
-            colorScheme="green"
-            isDisabled={submission.status === SubmissionStatus.ACCEPTED}
-            icon={<HiCheck />}
-            label="Accept"
-            onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
-          />
-          <Popover>
-            <PopoverTrigger>
-              <div>
-                <HeaderButton
-                  colorScheme={COLORS[submission.status ?? SubmissionStatus.UNDER_REVIEW]}
-                  icon={<HiFlag />}
-                  label="Mark for Review"
-                />
-              </div>
-            </PopoverTrigger>
-            <PopoverContent>
-              <PopoverBody>
-                <HStack>
-                  <MarkColorIconButton status={SubmissionStatus.MARKED_ORANGE} onSetStatus={onSetStatus} />
-                  <MarkColorIconButton status={SubmissionStatus.MARKED_YELLOW} onSetStatus={onSetStatus} />
-                  <MarkColorIconButton status={SubmissionStatus.MARKED_BLUE} onSetStatus={onSetStatus} />
-                  <MarkColorIconButton status={SubmissionStatus.MARKED_PURPLE} onSetStatus={onSetStatus} />
-                </HStack>
-              </PopoverBody>
-            </PopoverContent>
-          </Popover>
-          <HeaderButton
-            colorScheme="red"
-            isDisabled={submission.status === SubmissionStatus.REJECTED}
-            icon={<HiX />}
-            label="Reject"
-            onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
-          />
-        </LightMode>
+        {!readOnly && (
+          <LightMode>
+            <HeaderButton
+              colorScheme="green"
+              isDisabled={submission.status === SubmissionStatus.ACCEPTED}
+              icon={<HiCheck />}
+              label="Accept"
+              onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
+            />
+            <Popover>
+              <PopoverTrigger>
+                <div>
+                  <HeaderButton
+                    colorScheme={COLORS[submission.status ?? SubmissionStatus.UNDER_REVIEW]}
+                    icon={<HiFlag />}
+                    label="Mark for Review"
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent>
+                <PopoverBody>
+                  <HStack>
+                    <MarkColorIconButton status={SubmissionStatus.MARKED_ORANGE} onSetStatus={onSetStatus} />
+                    <MarkColorIconButton status={SubmissionStatus.MARKED_YELLOW} onSetStatus={onSetStatus} />
+                    <MarkColorIconButton status={SubmissionStatus.MARKED_BLUE} onSetStatus={onSetStatus} />
+                    <MarkColorIconButton status={SubmissionStatus.MARKED_PURPLE} onSetStatus={onSetStatus} />
+                  </HStack>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
+            <HeaderButton
+              colorScheme="red"
+              isDisabled={submission.status === SubmissionStatus.REJECTED}
+              icon={<HiX />}
+              label="Reject"
+              onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
+            />
+          </LightMode>
+        )}
       </HStack>
 
       {submission.comment && (
@@ -357,9 +360,10 @@ type SubmissionPageProps = {
   submissions: SerializableSubmission[];
   submission: SerializableSubmission;
   userSubmissions: SerializableSubmission[];
+  fullAccess: boolean;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, userSubmissions }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -408,10 +412,10 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions }
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
-          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} />
+          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} readOnly={!fullAccess} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
-          <SubmissionContent key={form.id} form={form} submission={sub} />
+          <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullAccess} />
 
           {userSubmissions.length > 0 && (
             <Stack spacing="2" mt="6">
@@ -480,17 +484,30 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
       .filter((s) => s._id.toString() !== submissionId)
       .map(makeSerializable);
 
+    const fullAccess = hasFullAccess(member, formId);
+    const serializedSubmission = makeSerializable(submission);
+
+    if (!fullAccess) {
+      const firstPageSlugs = getFirstPageFieldSlugs(form);
+      const filteredData = Object.fromEntries(
+        Object.entries(serializedSubmission.data).filter(
+          ([key]) => !firstPageSlugs.has(key)
+        )
+      );
+      serializedSubmission.data = filteredData;
+    }
+
     return {
       props: {
         id: formId,
         form,
         user,
         submissions: submissions.map(makeSerializable),
-        submission: makeSerializable(submission),
+        submission: serializedSubmission,
         userSubmissions,
+        fullAccess,
       },
     };
   },
-  AuthMode.AUTHENTICATED,
-  Position.COMMUNITY_MANAGER
+  AuthMode.AUTHENTICATED
 );

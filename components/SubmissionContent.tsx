@@ -7,24 +7,33 @@ import {
 } from "@chakra-ui/react";
 import { Form } from "@formium/types";
 
+import { getFirstPageFieldSlugs } from "~helpers/form";
 import { SerializableSubmission } from "~helpers/types";
 
 type SubmissionContentProps = {
   form: Form;
   submission: SerializableSubmission;
+  hideFirstPage?: boolean;
 };
 
 const SubmissionContent = ({
   form,
   submission,
+  hideFirstPage,
 }: SubmissionContentProps) => {
+  const firstPageSlugs = hideFirstPage ? getFirstPageFieldSlugs(form) : new Set<string>();
+
   const fieldNames = Object.values(form.schema?.fields ?? {}).reduce(
     (acc, val) => acc.set(val.slug, val.title),
     new Map<string, string | undefined>()
   );
 
-  const ownedFields = [...fieldNames.keys()].filter((x) => submission.data.hasOwnProperty(x));
-  const otherFields = Object.keys(submission.data).filter((x) => !ownedFields.includes(x));
+  const ownedFields = [...fieldNames.keys()]
+    .filter((x) => submission.data.hasOwnProperty(x))
+    .filter((x) => !firstPageSlugs.has(x));
+  const otherFields = Object.keys(submission.data)
+    .filter((x) => !ownedFields.includes(x))
+    .filter((x) => !firstPageSlugs.has(x));
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
 
