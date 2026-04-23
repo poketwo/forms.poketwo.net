@@ -147,10 +147,11 @@ const MarkColorIconButton = ({ status, onSetStatus }: MarkColorIconButtonProps) 
 type SubmissionHeaderProps = {
   submission: SerializableSubmission;
   onSetStatus: (status: SubmissionStatus) => Promise<void> | void;
-  readOnly?: boolean;
+  canFlag?: boolean;
+  fullAccess?: boolean;
 };
 
-const SubmissionHeader = ({ submission, onSetStatus, readOnly }: SubmissionHeaderProps) => {
+const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess }: SubmissionHeaderProps) => {
   const [name, discrim] = submission.user_tag.split("#", 2);
 
   return (
@@ -174,15 +175,17 @@ const SubmissionHeader = ({ submission, onSetStatus, readOnly }: SubmissionHeade
           </Text>
         </Stack>
 
-        {!readOnly && (
+        {(fullAccess || canFlag) && (
           <LightMode>
-            <HeaderButton
-              colorScheme="green"
-              isDisabled={submission.status === SubmissionStatus.ACCEPTED}
-              icon={<HiCheck />}
-              label="Accept"
-              onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
-            />
+            {fullAccess && (
+              <HeaderButton
+                colorScheme="green"
+                isDisabled={submission.status === SubmissionStatus.ACCEPTED}
+                icon={<HiCheck />}
+                label="Accept"
+                onClick={() => onSetStatus(SubmissionStatus.ACCEPTED)}
+              />
+            )}
             <Popover>
               <PopoverTrigger>
                 <div>
@@ -204,13 +207,15 @@ const SubmissionHeader = ({ submission, onSetStatus, readOnly }: SubmissionHeade
                 </PopoverBody>
               </PopoverContent>
             </Popover>
-            <HeaderButton
-              colorScheme="red"
-              isDisabled={submission.status === SubmissionStatus.REJECTED}
-              icon={<HiX />}
-              label="Reject"
-              onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
-            />
+            {fullAccess && (
+              <HeaderButton
+                colorScheme="red"
+                isDisabled={submission.status === SubmissionStatus.REJECTED}
+                icon={<HiX />}
+                label="Reject"
+                onClick={() => onSetStatus(SubmissionStatus.REJECTED)}
+              />
+            )}
           </LightMode>
         )}
       </HStack>
@@ -412,7 +417,7 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
-          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} readOnly={!fullAccess} />
+          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
           <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullAccess} />
