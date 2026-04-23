@@ -19,6 +19,7 @@ const STATUS_LABELS: { [key in SubmissionStatus]: string } = {
   [SubmissionStatus.MARKED_YELLOW]: "Under Review",
   [SubmissionStatus.MARKED_BLUE]: "Under Review",
   [SubmissionStatus.MARKED_PURPLE]: "Under Review",
+  [SubmissionStatus.MARKED_RED]: "Under Review",
 };
 
 const STATUS_COLORS: { [key in SubmissionStatus]: string } = {
@@ -29,6 +30,7 @@ const STATUS_COLORS: { [key in SubmissionStatus]: string } = {
   [SubmissionStatus.MARKED_YELLOW]: "yellow",
   [SubmissionStatus.MARKED_BLUE]: "yellow",
   [SubmissionStatus.MARKED_PURPLE]: "yellow",
+  [SubmissionStatus.MARKED_RED]: "yellow",
 };
 
 const getDateFromObjectId = (id: string): string => {

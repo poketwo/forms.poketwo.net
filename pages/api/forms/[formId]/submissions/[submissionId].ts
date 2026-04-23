@@ -5,8 +5,16 @@ import { NextApiResponse } from "next";
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 import { fetchSubmission, updateSubmission } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { hasFullAccess } from "~helpers/permissions";
+import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
 import { Submission, SubmissionStatus } from "~helpers/types";
+
+const FLAG_STATUSES = [
+  SubmissionStatus.MARKED_ORANGE,
+  SubmissionStatus.MARKED_YELLOW,
+  SubmissionStatus.MARKED_BLUE,
+  SubmissionStatus.MARKED_PURPLE,
+  SubmissionStatus.MARKED_RED,
+];
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
 
@@ -56,7 +64,11 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const member = req.session.member;
   if (!user || !member) return res.status(401);
 
-  if (!hasFullAccess(member, formId)) return res.status(403).end();
+  const full = hasFullAccess(member, formId);
+  const permitted = permittedToViewForm(member, formId);
+
+  if (!permitted) return res.status(403).end();
+  if (!full && !FLAG_STATUSES.includes(req.body.status)) return res.status(403).end();
 
   const submission = await fetchSubmission(submissionId);
   if (!submission) return res.status(404);

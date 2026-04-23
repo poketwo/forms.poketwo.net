@@ -57,6 +57,7 @@ export enum SubmissionStatus {
   MARKED_YELLOW = 5,
   MARKED_BLUE = 3,
   MARKED_PURPLE = 6,
+  MARKED_RED = 7,
 }
 
 export type Submission<T = any> = {
