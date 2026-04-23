@@ -13,6 +13,7 @@ const FLAG_STATUSES = [
   SubmissionStatus.MARKED_YELLOW,
   SubmissionStatus.MARKED_BLUE,
   SubmissionStatus.MARKED_PURPLE,
+  SubmissionStatus.MARKED_RED,
 ];
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
