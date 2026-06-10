@@ -14,7 +14,7 @@ const fullAccessRoles: Record<string, string[]> = {
 const restrictedAccessRoles: Record<string, string[]> = {
   "moderator-application": [seniorModerator],
   "ban-appeal": [seniorModerator],
-  "suspension-appeal": [seniorModerator],
+  "suspension-appeal": [admin],
 };
 
 export const permittedToViewForm = (member: Member, formId: string) => {
