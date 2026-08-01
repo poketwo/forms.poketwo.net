@@ -3,7 +3,7 @@ import { NextApiResponse } from "next";
 import absoluteUrl from "next-absolute-url";
 
 import oauth from "~helpers/oauth";
-import { AuthMode, NextIronRequest, withSession } from "~helpers/session";
+import { AuthMode, NextIronRequest, saveSession, withSession } from "~helpers/session";
 
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   let id = req.session.id;
@@ -11,7 +11,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   if (!id) {
     id = crypto.randomBytes(16).toString("hex");
     req.session.id = id;
-    await req.session.save();
+    await saveSession(req.session);
   }
 
   const { origin } = absoluteUrl(req);

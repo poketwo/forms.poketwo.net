@@ -1,4 +1,3 @@
-import { TokenRequestResult } from "discord-oauth2";
 import { IronSession, getIronSession } from "iron-session";
 import {
   GetServerSidePropsContext,
@@ -27,7 +26,6 @@ type SessionVars = {
   error?: string;
   next?: string;
   id?: string;
-  token?: TokenRequestResult;
 };
 
 export type NextIronRequest = NextApiRequest & { session: IronSession<SessionVars> };
@@ -65,6 +63,17 @@ const addMemberInfo = async (session: IronSession<SessionVars>) => {
   session.poketwoMember = poketwoMember;
 
   return { user, member, poketwoMember };
+};
+
+// Member data is refetched on every request, and staff members have large role
+// lists that can push the session cookie past the browser size limit.
+export const saveSession = async (session: IronSession<SessionVars>) => {
+  const { member, poketwoMember } = session;
+  session.member = undefined;
+  session.poketwoMember = undefined;
+  await session.save();
+  session.member = member;
+  session.poketwoMember = poketwoMember;
 };
 
 const handleRequest = async (user: User | undefined, mode: AuthMode) => {
