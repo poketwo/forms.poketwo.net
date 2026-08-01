@@ -2,9 +2,8 @@ import crypto from "crypto";
 import { NextApiResponse } from "next";
 import absoluteUrl from "next-absolute-url";
 
-import { fetchMember } from "~helpers/db";
 import oauth from "~helpers/oauth";
-import { AuthMode, NextIronRequest, withSession } from "~helpers/session";
+import { AuthMode, NextIronRequest, saveSession, withSession } from "~helpers/session";
 
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const id = req.session.id;
@@ -22,15 +21,12 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
     redirectUri: `${origin}/api/callback`,
   });
   const user = await oauth.getUser(token.access_token);
-  const member = await fetchMember(user.id);
 
   const next = req.session.next;
   req.session.next = undefined;
 
-  req.session.token = token;
   req.session.user = <any>user;
-  req.session.member = member;
-  await req.session.save();
+  await saveSession(req.session);
 
   res.redirect(next ?? "/");
 };
