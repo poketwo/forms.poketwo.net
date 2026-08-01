@@ -42,7 +42,7 @@ import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { getFirstPageFieldSlugs } from "~helpers/form";
-import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
+import { hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
   SerializableSubmission,
@@ -370,9 +370,10 @@ type SubmissionPageProps = {
   submission: SerializableSubmission;
   userSubmissions: SerializableSubmission[];
   fullAccess: boolean;
+  fullContent: boolean;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, fullContent }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -424,7 +425,7 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
           <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
-          <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullAccess} />
+          <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullContent} />
 
           {userSubmissions.length > 0 && (
             <Stack spacing="2" mt="6">
@@ -494,9 +495,10 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
       .map(makeSerializable);
 
     const fullAccess = hasFullAccess(member, formId);
+    const fullContent = hasFullContentAccess(member, formId);
     const serializedSubmission = makeSerializable(submission);
 
-    if (!fullAccess) {
+    if (!fullContent) {
       const firstPageSlugs = getFirstPageFieldSlugs(form);
       const filteredData = Object.fromEntries(
         Object.entries(serializedSubmission.data).filter(
@@ -515,6 +517,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         submission: serializedSubmission,
         userSubmissions,
         fullAccess,
+        fullContent,
       },
     };
   },
