@@ -29,3 +29,9 @@ export const hasFullAccess = (member: Member, formId: string) => {
   const fullRoles = fullAccessRoles[formId] ?? [];
   return roles.some((role) => fullRoles.includes(role));
 };
+
+// Forms whose first page holds demographic details, hidden from restricted roles.
+const redactedForms = ["moderator-application"];
+
+export const hasFullContentAccess = (member: Member, formId: string) =>
+  !redactedForms.includes(formId) || hasFullAccess(member, formId);
