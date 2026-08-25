@@ -41,15 +41,17 @@ const VideoEvidenceField = ({ links, onChange }: VideoEvidenceFieldProps) => {
         <Box>
           <FormLabel mb="1">Video evidence (optional)</FormLabel>
           <Text color="gray.500" fontSize="sm">
-            While optional, video evidence is effectively required for the fastest resolution.
+            Video evidence is technically optional, but we generally cannot process an appeal
+            without it. Include clear evidence to avoid delays.
           </Text>
         </Box>
 
         <Alert status="warning" rounded="md">
           <AlertIcon />
           <AlertDescription fontSize="sm">
-            Add direct video links from Discord or another host. Discord attachment links expire,
-            so use a permanent host when possible.
+            Upload your video to YouTube, Imgur, Catbox, or File Garden, then paste a public link
+            that anyone can view without signing in. Use a direct video link for hosts other than
+            YouTube.
           </AlertDescription>
         </Alert>
 
@@ -63,7 +65,7 @@ const VideoEvidenceField = ({ links, onChange }: VideoEvidenceFieldProps) => {
                   <Input
                     aria-label={`Video evidence link ${index + 1}`}
                     type="url"
-                    placeholder="https://..."
+                    placeholder="https://youtu.be/..."
                     value={link}
                     onChange={(event) => updateLink(index, event.target.value)}
                   />
