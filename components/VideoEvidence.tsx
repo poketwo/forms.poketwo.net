@@ -10,6 +10,8 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 
+import { getYouTubeEmbedUrl } from "~helpers/videoEvidence";
+
 type VideoEvidenceItemProps = {
   link: string;
   index: number;
@@ -18,6 +20,7 @@ type VideoEvidenceItemProps = {
 const VideoEvidenceItem = ({ link, index }: VideoEvidenceItemProps) => {
   const [failed, setFailed] = useState(false);
   const borderColor = useColorModeValue("gray.200", "gray.600");
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(link);
 
   return (
     <Box borderWidth="1px" borderColor={borderColor} rounded="md" overflow="hidden">
@@ -29,6 +32,13 @@ const VideoEvidenceItem = ({ link, index }: VideoEvidenceItemProps) => {
               to a supported video file.
             </Text>
           </Stack>
+        ) : youtubeEmbedUrl ? (
+          <iframe
+            src={youtubeEmbedUrl}
+            title={`Video evidence ${index + 1}`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
         ) : (
           <Box w="full" h="full" bg="black">
             <video
