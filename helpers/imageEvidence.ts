@@ -19,3 +19,19 @@ export const normalizeImageEvidenceLinks = (value: unknown): string[] => {
 
   return [...new Set(links.map((link) => link.trim()).filter(isValidImageEvidenceUrl))];
 };
+
+export const getImageEvidencePreviewUrl = (value: string): string => {
+  const url = new URL(value);
+  const hostname = url.hostname.toLowerCase();
+  const pathParts = url.pathname.split("/").filter(Boolean);
+
+  if (
+    (hostname === "imgur.com" || hostname === "www.imgur.com") &&
+    pathParts.length === 1
+  ) {
+    const match = pathParts[0].match(/^([a-zA-Z0-9]+)(?:\.(?:gif|jpe?g|png|webp))?$/i);
+    if (match) return `https://i.imgur.com/${match[1]}.png`;
+  }
+
+  return value;
+};
