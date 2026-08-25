@@ -18,7 +18,7 @@ import {
 
 import { MAX_VIDEO_EVIDENCE_LINKS, isValidVideoEvidenceUrl } from "~helpers/videoEvidence";
 
-type VideoEvidenceFieldProps = {
+export type VideoEvidenceFieldProps = {
   links: string[];
   onChange: (links: string[]) => void;
 };
@@ -36,7 +36,7 @@ const VideoEvidenceField = ({ links, onChange }: VideoEvidenceFieldProps) => {
   };
 
   return (
-    <Box rounded="md" shadow={shadow} p="4" mb="4">
+    <Box rounded="md" shadow={shadow} p="4">
       <Stack spacing="4">
         <Box>
           <FormLabel mb="1">Video evidence (optional)</FormLabel>
