@@ -1,23 +1,15 @@
+---
+name: testing-forms
+description: Set up and runtime-test forms.poketwo.net flows with Discord OAuth, MongoDB, Formium fixtures, and submission detail views.
+---
+
 # Testing forms.poketwo.net
 
 ## Overview
-This is a Next.js app (v14) using Chakra UI, MongoDB, Discord OAuth, Formium, and SendGrid. It handles form submissions (e.g., staff applications, suspension appeals) for the Poketwo Discord community.
-
-## Required Environment Variables
-The app requires these env vars to run:
-- `DATABASE_URI` — MongoDB connection string for Guiduck DB
-- `DATABASE_NAME` — Guiduck database name
-- `POKETWO_DATABASE_URI` — MongoDB connection string for Poketwo DB
-- `POKETWO_DATABASE_NAME` — Poketwo database name
-- `SENDGRID_KEY` — SendGrid API key for email notifications
-- `SECRET_KEY` — Session encryption key (iron-session)
-- `DISCORD_CLIENT_ID` — Discord OAuth app client ID
-- `DISCORD_CLIENT_SECRET` — Discord OAuth app client secret
-- `NEXT_PUBLIC_FORMIUM_PROJECT_ID` — Formium project ID
-- `FORMIUM_TOKEN` — Formium API token
+This is a Next.js 14 app using Chakra UI, MongoDB, Discord OAuth, Formium, and SendGrid. It handles form submissions such as staff applications and appeals for the Pokétwo Discord community.
 
 ## Devin Secrets Needed
-None currently configured. To test with real data, the following secrets would need to be provisioned:
+For real integrated data, provision:
 - `FORMS_DATABASE_URI`
 - `FORMS_DATABASE_NAME`
 - `FORMS_POKETWO_DATABASE_URI`
@@ -29,46 +21,46 @@ None currently configured. To test with real data, the following secrets would n
 - `FORMS_FORMIUM_TOKEN`
 - `FORMS_SENDGRID_KEY`
 
-## Local Development
+If repository-specific aliases are unavailable, organization secrets named `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` can support localhost OAuth when they belong to a Discord application permitting `http://localhost:3000/api/callback`. Never copy production session cookies.
+
+## Local development
 ```bash
+sudo systemctl start mongod
 npm install
 npm run dev
 ```
 
-## Testing Without Production Credentials
-Since DB connections happen at module level, the dev server won't fully function without real credentials. However, you can:
+The app uses two Mongo connections configured by:
+- `DATABASE_URI` / `DATABASE_NAME` for member and submission data.
+- `POKETWO_DATABASE_URI` / `POKETWO_DATABASE_NAME` for Pokétwo member state.
 
-1. **Build verification**: Run with dummy env vars to verify the build succeeds:
-   ```bash
-   DATABASE_URI="mongodb://localhost:27017" DATABASE_NAME="test" \
-   POKETWO_DATABASE_URI="mongodb://localhost:27017" POKETWO_DATABASE_NAME="test" \
-   SENDGRID_KEY="SG.test" SECRET_KEY="testsecretkeytestsecretkey" \
-   DISCORD_CLIENT_ID="test" DISCORD_CLIENT_SECRET="test" \
-   NEXT_PUBLIC_FORMIUM_PROJECT_ID="test" FORMIUM_TOKEN="test" \
-   npx next build
-   ```
+Mongo member identifiers and role arrays are BSON `Long` values. The Guiduck member key is shaped like `{ _id: { id: Long, guild_id: Long }, roles: Long[] }`; the Pokétwo member key is `_id: Long`.
 
-2. **Component rendering tests**: Create temporary test pages in `pages/` that render components with mock data (bypassing `getServerSideProps`). This works because client-side components are pure React and don't need DB access.
+## Testing without Formium credentials
+Use a temporary, clearly test-gated Formium fixture only when real Formium access is unavailable. Keep submission APIs, MongoDB, authorization, and real list/detail routes intact so the run remains end-to-end for application-owned behavior. Suppress outbound SendGrid only under the same test-only flag, then revert all fixture edits after testing.
 
-3. **Static analysis**: `npx tsc --noEmit` and `npx next lint` work without env vars.
+A minimal Formium schema needs `schema.pageIds`, a page field whose `items` point to input field IDs, and matching entries in `schema.fields`. Important: installed `@formium/types` runtime `FormElementType` values are strings (for example, `"PAGE"` and `"LONG_TEXT"`) even though declarations may look like numeric enums. Use imported enum members or the string runtime values; numeric literals cause Formium validation to fail at render time.
 
-## Key Pages & Routes
-- `/a/[formId]` — Form submission page (user-facing)
-- `/a/[formId]/submissions` — Submission list (admin, requires COMMUNITY_MANAGER+)
-- `/a/[formId]/submissions/[submissionId]` — Submission detail with review actions (admin)
-- `/dashboard` — Dashboard page
-- `/api/forms/[formId]/submissions` — POST to create submission
-- `/api/forms/[formId]/submissions/[submissionId]` — PATCH to update status/comment
+Real OAuth may require Discord CAPTCHA and new-location email verification. Complete those in the UI before recording feature tests. Restarting the local Next.js server with the same `SECRET_KEY` preserves the authenticated browser session.
 
-## Architecture Notes
-- Auth: Discord OAuth with iron-session
-- DB: MongoDB via native driver (not Mongoose)
-- Forms: Formium for form definitions, custom MongoDB for submissions
-- The `submission` collection stores: form_id, user_id, user_tag, email, data, status, reviewer_id, comment
-- `SubmissionStatus` enum: UNDER_REVIEW(0), REJECTED(1), ACCEPTED(2), MARKED_BLUE(3), MARKED_ORANGE(4), MARKED_YELLOW(5), MARKED_PURPLE(6)
+## Key routes
+- `/a/[formId]` — authenticated user form
+- `/my-submissions/[formId]` — submitter list
+- `/my-submissions/[formId]/[submissionId]` — submitter detail
+- `/a/[formId]/submissions` — reviewer list
+- `/a/[formId]/submissions/[submissionId]` — reviewer detail/actions
+- `/api/forms/[formId]/submissions` — submission POST
 
-## CI/CD
-- Vercel deployment (may fail on preview deploys if env vars aren't configured)
-- Vercel deploy check is NOT marked as required
-- ESLint via `next lint`
-- No pre-commit hooks configured
+## Runtime evidence strategy
+- Prefer UI submission and navigation over direct requests with authenticated browser cookies.
+- When client validation prevents exercising a server-only rejection path, use a temporary environment-gated same-origin UI probe that visibly reports the unchanged API handler's exact status and body. Label it as test-only, never extract cookies, and revert it after the run.
+- Use local MongoDB readback after UI submission to corroborate exact normalization/omission when needed.
+- Seed only local databases for role- or state-gated flows, restart the app to clear member caches, and remove or isolate test databases afterward.
+- For image preview tests, pair visible screenshots/recording with DOM source inspection when proving URL translation or extension retention.
+- For native-video preview tests, preflight a small direct `video/mp4` URL in the installed browser, then pair it with deterministic HTTP 404 and non-video content-type URLs to distinguish playback from both fallback modes.
+
+## Static checks
+```bash
+npm run lint
+npx tsc --noEmit --incremental false
+```
