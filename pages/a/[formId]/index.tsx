@@ -160,15 +160,42 @@ const NotSuspended = () => (
   </Alert>
 );
 
+const NotBanned = () => (
+  <Alert
+    maxW="3xl"
+    mx="auto"
+    p="8"
+    status="info"
+    flexDirection="column"
+    textAlign="center"
+    rounded="lg"
+  >
+    <AlertIcon boxSize="40px" mr={0} />
+    <AlertTitle mt={4} mb={1} fontSize="lg">
+      You are not banned
+    </AlertTitle>
+    <AlertDescription maxW="sm">
+      You can only submit a server ban appeal if you are banned from the Pokétwo Discord server.
+    </AlertDescription>
+  </Alert>
+);
+
 type FormPageProps = {
   form: Form;
   user: User;
   previous: SubmissionStatus | null;
   submissionTimestamp: number | null;
+  serverMember: boolean;
   suspended: boolean;
 };
 
-const FormContent = ({ form, previous, submissionTimestamp, suspended }: FormPageProps) => {
+const FormContent = ({
+  form,
+  previous,
+  submissionTimestamp,
+  serverMember,
+  suspended,
+}: FormPageProps) => {
   const [status, setStatus] = useState(previous);
   const [error, setError] = useState<Error | undefined>();
   const [videoEvidenceLinks, setVideoEvidenceLinks] = useState([""]);
@@ -217,6 +244,10 @@ const FormContent = ({ form, previous, submissionTimestamp, suspended }: FormPag
     return <NotSuspended />;
   }
 
+  if (form.slug === "ban-appeal" && serverMember) {
+    return <NotBanned />;
+  }
+
   return (
     <>
       {acceptsVideoEvidence && (
@@ -241,6 +272,7 @@ export default FormPage;
 export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ req, params }) => {
   const id = params?.formId?.toString();
   const user = req.session.user;
+  const member = req.session.member;
   const poketwoMember = req.session.poketwoMember;
 
   if (!id) throw new Error("Form ID not found");
@@ -272,6 +304,7 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
       user,
       previous,
       submissionTimestamp,
+      serverMember: member !== undefined,
       suspended,
     },
   };

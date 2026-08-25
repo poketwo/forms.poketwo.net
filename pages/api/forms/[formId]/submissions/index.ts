@@ -44,6 +44,10 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const user = req.session.user;
   if (!user) return res.status(401);
 
+  if (formId === "ban-appeal" && req.session.member) {
+    return res.status(403).send("You can only submit a ban appeal if you are banned");
+  }
+
   if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
     return res.status(400).send("Invalid submission data");
   }
