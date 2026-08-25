@@ -14,6 +14,7 @@ import { Form } from "@formium/types";
 import Link from "next/link";
 import { useState } from "react";
 
+import VideoEvidenceField from "~components/VideoEvidenceField";
 import components from "~components/formium";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import MainLayout from "~components/layouts/MainLayout";
@@ -22,6 +23,11 @@ import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SubmissionStatus, User } from "~helpers/types";
 import { delay } from "~helpers/utils";
+import {
+  VIDEO_EVIDENCE_FIELD,
+  isValidVideoEvidenceUrl,
+  normalizeVideoEvidenceLinks,
+} from "~helpers/videoEvidence";
 
 const MARKED_ALERT_STATUS = [
   "info",
@@ -165,15 +171,32 @@ type FormPageProps = {
 const FormContent = ({ form, previous, submissionTimestamp, suspended }: FormPageProps) => {
   const [status, setStatus] = useState(previous);
   const [error, setError] = useState<Error | undefined>();
+  const [videoEvidenceLinks, setVideoEvidenceLinks] = useState([""]);
+  const acceptsVideoEvidence =
+    form.slug === "ban-appeal" || form.slug === "suspension-appeal";
 
   const handleSubmit = async (values: any) => {
     try {
+      const nonEmptyVideoEvidenceLinks = videoEvidenceLinks
+        .map((link) => link.trim())
+        .filter(Boolean);
+      if (nonEmptyVideoEvidenceLinks.some((link) => !isValidVideoEvidenceUrl(link))) {
+        throw new Error("Enter a valid HTTPS URL for each video evidence link.");
+      }
+
+      const videoEvidence = normalizeVideoEvidenceLinks(nonEmptyVideoEvidenceLinks);
+      const submissionValues =
+        acceptsVideoEvidence && videoEvidence.length > 0
+          ? { ...values, [VIDEO_EVIDENCE_FIELD]: videoEvidence }
+          : values;
+
       await delay(300);
-      await fetch(`/api/forms/${form.slug}/submissions`, {
+      const response = await fetch(`/api/forms/${form.slug}/submissions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(submissionValues),
       });
+      if (!response.ok) throw new Error(await response.text());
       setStatus(SubmissionStatus.UNDER_REVIEW);
     } catch (e) {
       setError(e as Error);
@@ -196,6 +219,9 @@ const FormContent = ({ form, previous, submissionTimestamp, suspended }: FormPag
 
   return (
     <>
+      {acceptsVideoEvidence && (
+        <VideoEvidenceField links={videoEvidenceLinks} onChange={setVideoEvidenceLinks} />
+      )}
       <FormiumForm data={form} components={components} onSubmit={handleSubmit} />
       <ErrorAlert error={error} setError={setError} />
     </>
