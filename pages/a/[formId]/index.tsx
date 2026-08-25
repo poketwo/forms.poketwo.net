@@ -14,7 +14,7 @@ import { Form } from "@formium/types";
 import Link from "next/link";
 import { useState } from "react";
 
-import VideoEvidenceField from "~components/VideoEvidenceField";
+import { VideoEvidenceProvider } from "~components/VideoEvidenceSlot";
 import components from "~components/formium";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import MainLayout from "~components/layouts/MainLayout";
@@ -248,12 +248,17 @@ const FormContent = ({
     return <NotBanned />;
   }
 
+  const formiumForm = <FormiumForm data={form} components={components} onSubmit={handleSubmit} />;
+
   return (
     <>
-      {acceptsVideoEvidence && (
-        <VideoEvidenceField links={videoEvidenceLinks} onChange={setVideoEvidenceLinks} />
+      {acceptsVideoEvidence ? (
+        <VideoEvidenceProvider links={videoEvidenceLinks} onChange={setVideoEvidenceLinks}>
+          {formiumForm}
+        </VideoEvidenceProvider>
+      ) : (
+        formiumForm
       )}
-      <FormiumForm data={form} components={components} onSubmit={handleSubmit} />
       <ErrorAlert error={error} setError={setError} />
     </>
   );
