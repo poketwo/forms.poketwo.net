@@ -51,7 +51,7 @@ const VideoEvidenceField = ({ links, onChange }: VideoEvidenceFieldProps) => {
           <AlertDescription fontSize="sm">
             Upload your video to YouTube, Imgur, Catbox, or File Garden, then paste a public link
             that anyone can view without signing in. Use a direct video link for hosts other than
-            YouTube.
+            YouTube. Do not use Discord attachment links because they expire.
           </AlertDescription>
         </Alert>
 
