@@ -14,20 +14,20 @@ import { Form } from "@formium/types";
 import Link from "next/link";
 import { useState } from "react";
 
-import ImageEvidenceField from "~components/ImageEvidenceField";
+import VideoEvidenceField from "~components/VideoEvidenceField";
 import components from "~components/formium";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import MainLayout from "~components/layouts/MainLayout";
 import { fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import {
-  IMAGE_EVIDENCE_FIELD,
-  isValidImageEvidenceUrl,
-  normalizeImageEvidenceLinks,
-} from "~helpers/imageEvidence";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SubmissionStatus, User } from "~helpers/types";
 import { delay } from "~helpers/utils";
+import {
+  VIDEO_EVIDENCE_FIELD,
+  isValidVideoEvidenceUrl,
+  normalizeVideoEvidenceLinks,
+} from "~helpers/videoEvidence";
 
 const MARKED_ALERT_STATUS = [
   "info",
@@ -171,23 +171,23 @@ type FormPageProps = {
 const FormContent = ({ form, previous, submissionTimestamp, suspended }: FormPageProps) => {
   const [status, setStatus] = useState(previous);
   const [error, setError] = useState<Error | undefined>();
-  const [imageEvidenceLinks, setImageEvidenceLinks] = useState([""]);
-  const acceptsImageEvidence =
+  const [videoEvidenceLinks, setVideoEvidenceLinks] = useState([""]);
+  const acceptsVideoEvidence =
     form.slug === "ban-appeal" || form.slug === "suspension-appeal";
 
   const handleSubmit = async (values: any) => {
     try {
-      const nonEmptyImageEvidenceLinks = imageEvidenceLinks
+      const nonEmptyVideoEvidenceLinks = videoEvidenceLinks
         .map((link) => link.trim())
         .filter(Boolean);
-      if (nonEmptyImageEvidenceLinks.some((link) => !isValidImageEvidenceUrl(link))) {
-        throw new Error("Enter a valid HTTPS URL for each image evidence link.");
+      if (nonEmptyVideoEvidenceLinks.some((link) => !isValidVideoEvidenceUrl(link))) {
+        throw new Error("Enter a valid HTTPS URL for each video evidence link.");
       }
 
-      const imageEvidence = normalizeImageEvidenceLinks(nonEmptyImageEvidenceLinks);
+      const videoEvidence = normalizeVideoEvidenceLinks(nonEmptyVideoEvidenceLinks);
       const submissionValues =
-        acceptsImageEvidence && imageEvidence.length > 0
-          ? { ...values, [IMAGE_EVIDENCE_FIELD]: imageEvidence }
+        acceptsVideoEvidence && videoEvidence.length > 0
+          ? { ...values, [VIDEO_EVIDENCE_FIELD]: videoEvidence }
           : values;
 
       await delay(300);
@@ -219,8 +219,8 @@ const FormContent = ({ form, previous, submissionTimestamp, suspended }: FormPag
 
   return (
     <>
-      {acceptsImageEvidence && (
-        <ImageEvidenceField links={imageEvidenceLinks} onChange={setImageEvidenceLinks} />
+      {acceptsVideoEvidence && (
+        <VideoEvidenceField links={videoEvidenceLinks} onChange={setVideoEvidenceLinks} />
       )}
       <FormiumForm data={form} components={components} onSubmit={handleSubmit} />
       <ErrorAlert error={error} setError={setError} />

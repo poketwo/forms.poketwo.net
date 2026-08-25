@@ -5,13 +5,13 @@ import { NextApiResponse } from "next";
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 import { createSubmission } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import {
-  IMAGE_EVIDENCE_FIELD,
-  MAX_IMAGE_EVIDENCE_LINKS,
-  isValidImageEvidenceUrl,
-  normalizeImageEvidenceLinks,
-} from "~helpers/imageEvidence";
 import { Submission } from "~helpers/types";
+import {
+  MAX_VIDEO_EVIDENCE_LINKS,
+  VIDEO_EVIDENCE_FIELD,
+  isValidVideoEvidenceUrl,
+  normalizeVideoEvidenceLinks,
+} from "~helpers/videoEvidence";
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
 
@@ -48,26 +48,26 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
     return res.status(400).send("Invalid submission data");
   }
 
-  const rawImageEvidence = req.body[IMAGE_EVIDENCE_FIELD];
-  if (rawImageEvidence !== undefined) {
+  const rawVideoEvidence = req.body[VIDEO_EVIDENCE_FIELD];
+  if (rawVideoEvidence !== undefined) {
     if (
       !["ban-appeal", "suspension-appeal"].includes(formId) ||
-      !Array.isArray(rawImageEvidence) ||
-      rawImageEvidence.length > MAX_IMAGE_EVIDENCE_LINKS ||
-      rawImageEvidence.some(
-        (link) => typeof link !== "string" || !isValidImageEvidenceUrl(link.trim())
+      !Array.isArray(rawVideoEvidence) ||
+      rawVideoEvidence.length > MAX_VIDEO_EVIDENCE_LINKS ||
+      rawVideoEvidence.some(
+        (link) => typeof link !== "string" || !isValidVideoEvidenceUrl(link.trim())
       )
     ) {
-      return res.status(400).send("Invalid image evidence links");
+      return res.status(400).send("Invalid video evidence links");
     }
   }
 
-  const imageEvidence = normalizeImageEvidenceLinks(rawImageEvidence);
+  const videoEvidence = normalizeVideoEvidenceLinks(rawVideoEvidence);
   const data = { ...req.body };
-  if (imageEvidence.length > 0) {
-    data[IMAGE_EVIDENCE_FIELD] = imageEvidence;
+  if (videoEvidence.length > 0) {
+    data[VIDEO_EVIDENCE_FIELD] = videoEvidence;
   } else {
-    delete data[IMAGE_EVIDENCE_FIELD];
+    delete data[VIDEO_EVIDENCE_FIELD];
   }
 
   const _submission = {

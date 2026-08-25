@@ -1,7 +1,4 @@
-import {
-  AddIcon,
-  DeleteIcon,
-} from "@chakra-ui/icons";
+import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import {
   Alert,
   AlertDescription,
@@ -19,17 +16,14 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 
-import {
-  MAX_IMAGE_EVIDENCE_LINKS,
-  isValidImageEvidenceUrl,
-} from "~helpers/imageEvidence";
+import { MAX_VIDEO_EVIDENCE_LINKS, isValidVideoEvidenceUrl } from "~helpers/videoEvidence";
 
-type ImageEvidenceFieldProps = {
+type VideoEvidenceFieldProps = {
   links: string[];
   onChange: (links: string[]) => void;
 };
 
-const ImageEvidenceField = ({ links, onChange }: ImageEvidenceFieldProps) => {
+const VideoEvidenceField = ({ links, onChange }: VideoEvidenceFieldProps) => {
   const shadow = useColorModeValue("base", "lg");
 
   const updateLink = (index: number, value: string) => {
@@ -45,43 +39,43 @@ const ImageEvidenceField = ({ links, onChange }: ImageEvidenceFieldProps) => {
     <Box rounded="md" shadow={shadow} p="4" mb="4">
       <Stack spacing="4">
         <Box>
-          <FormLabel mb="1">Image evidence (optional)</FormLabel>
+          <FormLabel mb="1">Video evidence (optional)</FormLabel>
           <Text color="gray.500" fontSize="sm">
-            While optional, image evidence is effectively required for the fastest resolution.
+            While optional, video evidence is effectively required for the fastest resolution.
           </Text>
         </Box>
 
         <Alert status="warning" rounded="md">
           <AlertIcon />
           <AlertDescription fontSize="sm">
-            Add Discord attachment, Imgur, or other direct image links. Discord attachment links
-            expire, so use a permanent image host when possible.
+            Add direct video links from Discord or another host. Discord attachment links expire,
+            so use a permanent host when possible.
           </AlertDescription>
         </Alert>
 
         <Stack spacing="3">
           {links.map((link, index) => {
-            const isInvalid = link.trim().length > 0 && !isValidImageEvidenceUrl(link.trim());
+            const isInvalid = link.trim().length > 0 && !isValidVideoEvidenceUrl(link.trim());
 
             return (
               <FormControl key={index} isInvalid={isInvalid}>
                 <HStack align="flex-start">
                   <Input
-                    aria-label={`Image evidence link ${index + 1}`}
+                    aria-label={`Video evidence link ${index + 1}`}
                     type="url"
                     placeholder="https://..."
                     value={link}
                     onChange={(event) => updateLink(index, event.target.value)}
                   />
                   <IconButton
-                    aria-label={`Remove image evidence link ${index + 1}`}
+                    aria-label={`Remove video evidence link ${index + 1}`}
                     icon={<DeleteIcon />}
                     variant="ghost"
                     colorScheme="red"
                     onClick={() => removeLink(index)}
                   />
                 </HStack>
-                <FormErrorMessage>Enter a valid HTTPS image link.</FormErrorMessage>
+                <FormErrorMessage>Enter a valid HTTPS video link.</FormErrorMessage>
               </FormControl>
             );
           })}
@@ -92,14 +86,14 @@ const ImageEvidenceField = ({ links, onChange }: ImageEvidenceFieldProps) => {
           size="sm"
           variant="outline"
           leftIcon={<AddIcon />}
-          isDisabled={links.length >= MAX_IMAGE_EVIDENCE_LINKS}
+          isDisabled={links.length >= MAX_VIDEO_EVIDENCE_LINKS}
           onClick={() => onChange([...links, ""])}
         >
-          Add another image
+          Add another video
         </Button>
       </Stack>
     </Box>
   );
 };
 
-export default ImageEvidenceField;
+export default VideoEvidenceField;

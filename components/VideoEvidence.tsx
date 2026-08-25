@@ -2,7 +2,6 @@ import { ExternalLinkIcon } from "@chakra-ui/icons";
 import {
   AspectRatio,
   Box,
-  Image,
   Link,
   SimpleGrid,
   Stack,
@@ -11,14 +10,12 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 
-import { getImageEvidencePreviewUrl } from "~helpers/imageEvidence";
-
-type ImageEvidenceItemProps = {
+type VideoEvidenceItemProps = {
   link: string;
   index: number;
 };
 
-const ImageEvidenceItem = ({ link, index }: ImageEvidenceItemProps) => {
+const VideoEvidenceItem = ({ link, index }: VideoEvidenceItemProps) => {
   const [failed, setFailed] = useState(false);
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
@@ -28,29 +25,21 @@ const ImageEvidenceItem = ({ link, index }: ImageEvidenceItemProps) => {
         {failed ? (
           <Stack align="center" justify="center" p="4" bg="blackAlpha.50">
             <Text fontSize="sm" color="gray.500" textAlign="center">
-              This image could not be previewed. The link may have expired.
+              This video could not be played. The link may have expired or may not point directly
+              to a supported video file.
             </Text>
           </Stack>
         ) : (
-          <Link
-            href={link}
-            isExternal
-            aria-label={`Open image evidence ${index + 1}`}
-            w="full"
-            h="full"
-          >
-            <Image
-              src={getImageEvidencePreviewUrl(link)}
-              alt={`Image evidence ${index + 1}`}
-              w="full"
-              h="full"
-              objectFit="contain"
-              bg="blackAlpha.100"
-              loading="lazy"
-              referrerPolicy="no-referrer"
+          <Box w="full" h="full" bg="black">
+            <video
+              src={link}
+              aria-label={`Video evidence ${index + 1}`}
+              controls
+              preload="metadata"
               onError={() => setFailed(true)}
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
             />
-          </Link>
+          </Box>
         )}
       </AspectRatio>
       <Link
@@ -63,22 +52,22 @@ const ImageEvidenceItem = ({ link, index }: ImageEvidenceItemProps) => {
         color="blue.500"
         noOfLines={1}
       >
-        Open image <ExternalLinkIcon mx="1px" />
+        Open video <ExternalLinkIcon mx="1px" />
       </Link>
     </Box>
   );
 };
 
-type ImageEvidenceProps = {
+type VideoEvidenceProps = {
   links: string[];
 };
 
-const ImageEvidence = ({ links }: ImageEvidenceProps) => (
+const VideoEvidence = ({ links }: VideoEvidenceProps) => (
   <SimpleGrid columns={{ base: 1, md: 2 }} spacing="3" w="full">
     {links.map((link, index) => (
-      <ImageEvidenceItem key={link} link={link} index={index} />
+      <VideoEvidenceItem key={link} link={link} index={index} />
     ))}
   </SimpleGrid>
 );
 
-export default ImageEvidence;
+export default VideoEvidence;
