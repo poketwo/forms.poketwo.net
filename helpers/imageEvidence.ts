@@ -29,8 +29,11 @@ export const getImageEvidencePreviewUrl = (value: string): string => {
     (hostname === "imgur.com" || hostname === "www.imgur.com") &&
     pathParts.length === 1
   ) {
-    const match = pathParts[0].match(/^([a-zA-Z0-9]+)(?:\.(?:gif|jpe?g|png|webp))?$/i);
-    if (match) return `https://i.imgur.com/${match[1]}.png`;
+    const match = pathParts[0].match(/^([a-zA-Z0-9]+)(?:\.(gif|jpe?g|png|webp))?$/i);
+    if (match) {
+      const extension = match[2]?.toLowerCase() ?? "png";
+      return `https://i.imgur.com/${match[1]}.${extension}`;
+    }
   }
 
   return value;
