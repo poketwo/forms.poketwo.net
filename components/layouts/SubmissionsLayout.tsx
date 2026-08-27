@@ -27,7 +27,15 @@ import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
 import * as querystring from "querystring";
 import { forwardRef, useEffect, useMemo, useRef } from "react";
-import { HiCheck, HiChevronLeft, HiChevronRight, HiFlag, HiSearch, HiX } from "react-icons/hi";
+import {
+  HiCheck,
+  HiChevronLeft,
+  HiChevronRight,
+  HiFlag,
+  HiSearch,
+  HiVideoCamera,
+  HiX,
+} from "react-icons/hi";
 
 import { SerializableSubmission, SubmissionStatus } from "~helpers/types";
 import {
@@ -131,9 +139,12 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
           </Box>
 
           {hasVideoEvidence && (
-            <Tag size="sm" colorScheme="purple">
-              Video
-            </Tag>
+            <Icon
+              as={HiVideoCamera}
+              boxSize="5"
+              color="purple.500"
+              aria-label="Has video evidence"
+            />
           )}
           {submission.status === SubmissionStatus.ACCEPTED && (
             <Icon as={HiCheck} color="green.500" />
