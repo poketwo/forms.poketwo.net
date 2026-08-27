@@ -7,6 +7,7 @@ import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SerializableSubmission, User, makeSerializable } from "~helpers/types";
+import { supportsVideoEvidence } from "~helpers/videoEvidence";
 
 type SubmissionsPageProps = {
   user: User;
@@ -57,6 +58,8 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps, Su
     if (!form) return { notFound: true };
 
     const _submissions = await fetchSubmissions(form.slug, {
+      hasVideoEvidence:
+        supportsVideoEvidence(form.slug) && query.hasVideoEvidence === "true",
       page: Number(query.page ?? 1),
       userId: query.userId?.toString(),
       status: query.status ? Number(query.status) : { $nin: [1, 2] },

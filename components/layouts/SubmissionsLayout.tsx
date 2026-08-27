@@ -1,6 +1,7 @@
 import { HamburgerIcon } from "@chakra-ui/icons";
 import {
   Box,
+  Checkbox,
   Divider,
   Drawer,
   DrawerBody,
@@ -26,9 +27,22 @@ import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
 import * as querystring from "querystring";
 import { forwardRef, useEffect, useMemo, useRef } from "react";
-import { HiCheck, HiChevronLeft, HiChevronRight, HiFlag, HiSearch, HiX } from "react-icons/hi";
+import {
+  HiCheck,
+  HiChevronLeft,
+  HiChevronRight,
+  HiFlag,
+  HiSearch,
+  HiVideoCamera,
+  HiX,
+} from "react-icons/hi";
 
 import { SerializableSubmission, SubmissionStatus } from "~helpers/types";
+import {
+  VIDEO_EVIDENCE_FIELD,
+  normalizeVideoEvidenceLinks,
+  supportsVideoEvidence,
+} from "~helpers/videoEvidence";
 
 import MainLayout, { MainLayoutProps } from "./MainLayout";
 
@@ -77,17 +91,21 @@ const getDateFromObjectId = (id: string): string => {
 type SubmissionItemProps = {
   submission: SerializableSubmission;
   baseHref: string;
+  showVideoEvidence: boolean;
   userMode?: boolean;
 };
 
 const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
-  ({ submission, baseHref, userMode }: SubmissionItemProps, ref) => {
+  ({ submission, baseHref, showVideoEvidence, userMode }: SubmissionItemProps, ref) => {
     const { query, asPath } = useRouter();
     const { formId, submissionId, ...newQuery } = query;
 
     const href = `${baseHref}/${submission._id}?${querystring.stringify(newQuery)}`;
     const activeBg = useColorModeValue("gray.100", "gray.700");
     const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
+    const hasVideoEvidence =
+      showVideoEvidence &&
+      normalizeVideoEvidenceLinks(submission.data[VIDEO_EVIDENCE_FIELD]).length > 0;
 
     return (
       <Link href={href} passHref legacyBehavior>
@@ -120,6 +138,14 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
             )}
           </Box>
 
+          {hasVideoEvidence && (
+            <Icon
+              as={HiVideoCamera}
+              boxSize="5"
+              color="purple.500"
+              aria-label="Has video evidence"
+            />
+          )}
           {submission.status === SubmissionStatus.ACCEPTED && (
             <Icon as={HiCheck} color="green.500" />
           )}
@@ -135,11 +161,25 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
   },
 );
 
-const FilterForm = () => {
+type FilterFormProps = {
+  showVideoEvidence: boolean;
+};
+
+const FilterForm = ({ showVideoEvidence }: FilterFormProps) => {
   const { query } = useRouter();
   return (
     <Stack as="form" px="6">
       <Input name="userId" defaultValue={query.userId} size="sm" placeholder="Enter User ID" />
+      {showVideoEvidence && (
+        <Checkbox
+          name="hasVideoEvidence"
+          value="true"
+          defaultChecked={query.hasVideoEvidence === "true"}
+          size="sm"
+        >
+          Has video evidence
+        </Checkbox>
+      )}
       <HStack>
         <Select name="status" defaultValue={query.status} size="sm" placeholder="Select Status">
           <option value={SubmissionStatus.UNDER_REVIEW}>New</option>
@@ -163,32 +203,43 @@ type PaginationProps = {
   count: number;
 };
 
-const Pagination = ({ page, href, count }: PaginationProps) => (
-  <HStack>
-    <Link href={page > 1 ? `${href}?page=${page - 1}` : "#"} passHref legacyBehavior>
-      <IconButton
-        as="a"
-        flex="1"
-        borderRadius="0"
-        variant="ghost"
-        aria-label="Previous page"
-        icon={<HiChevronLeft />}
-        disabled={page <= 1}
-      />
-    </Link>
-    <Link href={count >= 100 ? `${href}?page=${page + 1}` : "#"} passHref legacyBehavior>
-      <IconButton
-        as="a"
-        flex="1"
-        borderRadius="0"
-        variant="ghost"
-        aria-label="Next page"
-        icon={<HiChevronRight />}
-        disabled={count < 100}
-      />
-    </Link>
-  </HStack>
-);
+const Pagination = ({ page, href, count }: PaginationProps) => {
+  const { query } = useRouter();
+  const pageHref = (targetPage: number) =>
+    `${href}?${querystring.stringify({
+      page: targetPage,
+      ...(query.userId && { userId: query.userId }),
+      ...(query.status && { status: query.status }),
+      ...(query.hasVideoEvidence && { hasVideoEvidence: query.hasVideoEvidence }),
+    })}`;
+
+  return (
+    <HStack>
+      <Link href={page > 1 ? pageHref(page - 1) : "#"} passHref legacyBehavior>
+        <IconButton
+          as="a"
+          flex="1"
+          borderRadius="0"
+          variant="ghost"
+          aria-label="Previous page"
+          icon={<HiChevronLeft />}
+          disabled={page <= 1}
+        />
+      </Link>
+      <Link href={count >= 100 ? pageHref(page + 1) : "#"} passHref legacyBehavior>
+        <IconButton
+          as="a"
+          flex="1"
+          borderRadius="0"
+          variant="ghost"
+          aria-label="Next page"
+          icon={<HiChevronRight />}
+          disabled={count < 100}
+        />
+      </Link>
+    </HStack>
+  );
+};
 
 type SubmissionsLayoutProps = MainLayoutProps & {
   form: Form;
@@ -211,6 +262,7 @@ const SubmissionsLayout = ({
   const { query } = useRouter();
   const page = Number(query.page ?? 1);
   const baseHref = baseHrefProp ?? `/a/${query.formId}/submissions`;
+  const showVideoEvidence = !userMode && supportsVideoEvidence(form.slug);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -261,13 +313,14 @@ const SubmissionsLayout = ({
             <DrawerHeader>{form.name}</DrawerHeader>
             <DrawerBody px="0">
               <Stack spacing={4}>
-                {!userMode && <FilterForm />}
+                {!userMode && <FilterForm showVideoEvidence={showVideoEvidence} />}
                 <Stack h="full" spacing="0" divider={<Divider />}>
                   {sorted.map((x) => (
                     <SubmissionItem
                       key={x._id}
                       submission={x}
                       baseHref={baseHref}
+                      showVideoEvidence={showVideoEvidence}
                       userMode={userMode}
                       ref={x._id === submission?._id ? ref : undefined}
                     />
@@ -295,7 +348,7 @@ const SubmissionsLayout = ({
                 {form.name}
               </Heading>
             </Link>
-            {!userMode && <FilterForm />}
+            {!userMode && <FilterForm showVideoEvidence={showVideoEvidence} />}
           </Stack>
 
           {sorted.map((x) => (
@@ -303,6 +356,7 @@ const SubmissionsLayout = ({
               key={x._id}
               submission={x}
               baseHref={baseHref}
+              showVideoEvidence={showVideoEvidence}
               userMode={userMode}
               ref={x._id === submission?._id ? ref : undefined}
             />
