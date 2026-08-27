@@ -11,6 +11,7 @@ import {
   Submission,
   SubmissionStatus,
 } from "./types";
+import { VIDEO_EVIDENCE_FIELD } from "./videoEvidence";
 
 // Guiduck DB
 
@@ -134,6 +135,7 @@ export const updateSubmission = async <T = any>(
 };
 
 type FetchSubmissionsOptions = {
+  hasVideoEvidence?: boolean;
   userId?: string;
   page?: number;
   onlyRecent?: boolean;
@@ -166,6 +168,13 @@ export const fetchSubmissions = async <T = any>(
     query = {
       ...query,
       user_id: Long.fromString(options.userId),
+    };
+  }
+
+  if (options?.hasVideoEvidence) {
+    query = {
+      ...query,
+      [`data.${VIDEO_EVIDENCE_FIELD}.0`]: { $exists: true },
     };
   }
 

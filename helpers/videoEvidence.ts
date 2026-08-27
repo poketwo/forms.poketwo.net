@@ -1,6 +1,11 @@
 export const VIDEO_EVIDENCE_FIELD = "video_evidence";
 export const MAX_VIDEO_EVIDENCE_LINKS = 10;
 
+const VIDEO_EVIDENCE_FORM_IDS = new Set(["ban-appeal", "suspension-appeal"]);
+
+export const supportsVideoEvidence = (formId: string): boolean =>
+  VIDEO_EVIDENCE_FORM_IDS.has(formId);
+
 export const isValidVideoEvidenceUrl = (value: string): boolean => {
   try {
     return new URL(value).protocol === "https:";

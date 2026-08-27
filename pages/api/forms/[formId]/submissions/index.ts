@@ -11,6 +11,7 @@ import {
   VIDEO_EVIDENCE_FIELD,
   isValidVideoEvidenceUrl,
   normalizeVideoEvidenceLinks,
+  supportsVideoEvidence,
 } from "~helpers/videoEvidence";
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
@@ -55,7 +56,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const rawVideoEvidence = req.body[VIDEO_EVIDENCE_FIELD];
   if (rawVideoEvidence !== undefined) {
     if (
-      !["ban-appeal", "suspension-appeal"].includes(formId) ||
+      !supportsVideoEvidence(formId) ||
       !Array.isArray(rawVideoEvidence) ||
       rawVideoEvidence.length > MAX_VIDEO_EVIDENCE_LINKS ||
       rawVideoEvidence.some(

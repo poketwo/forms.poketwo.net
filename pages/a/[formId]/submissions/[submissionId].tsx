@@ -51,6 +51,7 @@ import {
   makeSerializable,
 } from "~helpers/types";
 import { delay } from "~helpers/utils";
+import { supportsVideoEvidence } from "~helpers/videoEvidence";
 
 const COLORS = {
   [SubmissionStatus.UNDER_REVIEW]: "gray",
@@ -479,6 +480,8 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     if (!form) return { notFound: true };
 
     const _submissions = await fetchSubmissions(form.slug, {
+      hasVideoEvidence:
+        supportsVideoEvidence(form.slug) && query.hasVideoEvidence === "true",
       page: Number(query.page ?? 1),
       userId: query.userId?.toString(),
       status: query.status ? Number(query.status) : { $nin: [1, 2] },

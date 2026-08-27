@@ -27,6 +27,7 @@ import {
   VIDEO_EVIDENCE_FIELD,
   isValidVideoEvidenceUrl,
   normalizeVideoEvidenceLinks,
+  supportsVideoEvidence,
 } from "~helpers/videoEvidence";
 
 const MARKED_ALERT_STATUS = [
@@ -199,8 +200,7 @@ const FormContent = ({
   const [status, setStatus] = useState(previous);
   const [error, setError] = useState<Error | undefined>();
   const [videoEvidenceLinks, setVideoEvidenceLinks] = useState([""]);
-  const acceptsVideoEvidence =
-    form.slug === "ban-appeal" || form.slug === "suspension-appeal";
+  const acceptsVideoEvidence = supportsVideoEvidence(form.slug);
 
   const handleSubmit = async (values: any) => {
     try {
