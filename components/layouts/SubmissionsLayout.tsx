@@ -142,7 +142,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
             <Icon
               as={HiVideoCamera}
               boxSize="5"
-              color="purple.500"
+              color="black.500"
               aria-label="Has video evidence"
             />
           )}
