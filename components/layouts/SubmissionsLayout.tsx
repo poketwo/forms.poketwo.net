@@ -102,6 +102,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
 
     const href = `${baseHref}/${submission._id}?${querystring.stringify(newQuery)}`;
     const activeBg = useColorModeValue("gray.100", "gray.700");
+    const videoEvidenceColor = useColorModeValue("black", "white");
     const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
     const hasVideoEvidence =
       showVideoEvidence &&
@@ -142,7 +143,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
             <Icon
               as={HiVideoCamera}
               boxSize="5"
-              color="black.500"
+              color={videoEvidenceColor}
               aria-label="Has video evidence"
             />
           )}
