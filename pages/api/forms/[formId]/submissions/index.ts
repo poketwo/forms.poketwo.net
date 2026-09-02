@@ -3,7 +3,8 @@ import { Long } from "mongodb";
 import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
-import { createSubmission, fetchMember, fetchPoketwoMember } from "~helpers/db";
+import { createSubmission, fetchPoketwoMember } from "~helpers/db";
+import { fetchServerBan } from "~helpers/discord";
 import { formium } from "~helpers/formium";
 import { Submission } from "~helpers/types";
 import {
@@ -46,8 +47,14 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   if (!user) return res.status(401);
 
   if (formId === "ban-appeal") {
-    const member = await fetchMember(user.id, { refresh: true });
-    if (member) {
+    let serverBanned;
+    try {
+      serverBanned = await fetchServerBan(user.id);
+    } catch {
+      return res.status(503).send("Unable to verify your Discord ban status");
+    }
+
+    if (!serverBanned) {
       return res.status(403).send("You can only submit a ban appeal if you are banned");
     }
   }

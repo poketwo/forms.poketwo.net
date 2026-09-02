@@ -18,7 +18,8 @@ import { VideoEvidenceProvider } from "~components/VideoEvidenceSlot";
 import components from "~components/formium";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import MainLayout from "~components/layouts/MainLayout";
-import { fetchMember, fetchPoketwoMember, fetchSubmissions } from "~helpers/db";
+import { fetchPoketwoMember, fetchSubmissions } from "~helpers/db";
+import { fetchServerBan } from "~helpers/discord";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SubmissionStatus, User } from "~helpers/types";
@@ -181,12 +182,32 @@ const NotBanned = () => (
   </Alert>
 );
 
+const BanStatusUnavailable = () => (
+  <Alert
+    maxW="3xl"
+    mx="auto"
+    p="8"
+    status="error"
+    flexDirection="column"
+    textAlign="center"
+    rounded="lg"
+  >
+    <AlertIcon boxSize="40px" mr={0} />
+    <AlertTitle mt={4} mb={1} fontSize="lg">
+      Unable to verify your ban
+    </AlertTitle>
+    <AlertDescription maxW="sm">
+      Please try again later. Your appeal eligibility could not be checked with Discord.
+    </AlertDescription>
+  </Alert>
+);
+
 type FormPageProps = {
   form: Form;
   user: User;
   previous: SubmissionStatus | null;
   submissionTimestamp: number | null;
-  serverMember: boolean;
+  serverBanned: boolean | null;
   suspended: boolean;
 };
 
@@ -194,7 +215,7 @@ const FormContent = ({
   form,
   previous,
   submissionTimestamp,
-  serverMember,
+  serverBanned,
   suspended,
 }: FormPageProps) => {
   const [status, setStatus] = useState(previous);
@@ -244,7 +265,11 @@ const FormContent = ({
     return <NotSuspended />;
   }
 
-  if (form.slug === "ban-appeal" && serverMember) {
+  if (form.slug === "ban-appeal" && serverBanned === null) {
+    return <BanStatusUnavailable />;
+  }
+
+  if (form.slug === "ban-appeal" && !serverBanned) {
     return <NotBanned />;
   }
 
@@ -299,10 +324,14 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
     submissions.length > 0
       ? parseInt(submissions[0]._id.toString().substring(0, 8), 16) * 1000
       : null;
-  const serverMember =
-    id === "ban-appeal"
-      ? (await fetchMember(user.id, { refresh: true })) !== undefined
-      : false;
+  let serverBanned: boolean | null = false;
+  if (id === "ban-appeal") {
+    try {
+      serverBanned = await fetchServerBan(user.id);
+    } catch {
+      serverBanned = null;
+    }
+  }
   const suspended =
     id === "suspension-appeal"
       ? (await fetchPoketwoMember(user.id, { refresh: true }))?.suspended ?? false
@@ -314,7 +343,7 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
       user,
       previous,
       submissionTimestamp,
-      serverMember,
+      serverBanned,
       suspended,
     },
   };
