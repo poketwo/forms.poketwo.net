@@ -65,8 +65,8 @@ const addMemberInfo = async (session: IronSession<SessionVars>) => {
   return { user, member, poketwoMember };
 };
 
-// Member data is refetched on every request, and staff members have large role
-// lists that can push the session cookie past the browser size limit.
+// Member data is loaded on every request, and staff members have large role lists
+// that can push the session cookie past the browser size limit.
 export const saveSession = async (session: IronSession<SessionVars>) => {
   const { member, poketwoMember } = session;
   session.member = undefined;

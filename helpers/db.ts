@@ -30,32 +30,52 @@ const connect = async () => {
 const dbPromise = connect();
 const cache = new NodeCache({ stdTTL: 60 });
 
-const wrapCache = <T extends (id: string) => Promise<any>>(key: string, func: T) => {
-  return async (id: string): Promise<ReturnType<T>> => {
-    const cached = cache.get<ReturnType<T>>(`${key}:${id}`);
-    if (cached) return cached;
-    const val = await func(id);
-    cache.set(`${key}:${id}`, val);
-    return val;
+type CacheOptions = {
+  refresh?: boolean;
+};
+
+const wrapCache = <T>(
+  store: NodeCache,
+  key: string,
+  func: (id: string) => Promise<T | undefined>
+) => {
+  return async (id: string, options: CacheOptions = {}): Promise<T | undefined> => {
+    const cacheKey = `${key}:${id}`;
+    if (!options.refresh) {
+      const cached = store.get<T>(cacheKey);
+      if (cached !== undefined) return cached;
+    }
+
+    const value = await func(id);
+    if (value === undefined) {
+      store.del(cacheKey);
+    } else {
+      store.set(cacheKey, value);
+    }
+    return value;
   };
 };
 
-export const fetchMember = wrapCache("member", async (id: string): Promise<Member | undefined> => {
-  const db = await dbPromise;
-  const collection = db.collection("member");
-  const result = <RawMember | null>await collection.findOne({
-    _id: { id: Long.fromString(id), guild_id: Long.fromString("716390832034414685") },
-  });
-  if (!result) return undefined;
+export const fetchMember = wrapCache<Member>(
+  cache,
+  "member",
+  async (id: string): Promise<Member | undefined> => {
+    const db = await dbPromise;
+    const collection = db.collection("member");
+    const result = <RawMember | null>await collection.findOne({
+      _id: { id: Long.fromString(id), guild_id: Long.fromString("716390832034414685") },
+    });
+    if (!result) return undefined;
 
-  const roles = result.roles?.map((x) => x.toString());
+    const roles = result.roles?.map((x) => x.toString());
 
-  return {
-    ...result,
-    _id: result._id.toString(),
-    roles,
-  };
-});
+    return {
+      ...result,
+      _id: result._id.toString(),
+      roles,
+    };
+  }
+);
 
 // Poketwo DB
 
@@ -74,17 +94,8 @@ const connectPoketwo = async () => {
 const poketwoDbPromise = connectPoketwo();
 const poketwoCache = new NodeCache({ stdTTL: 60 });
 
-const wrapPoketwoCache = <T extends (id: string) => Promise<any>>(key: string, func: T) => {
-  return async (id: string): Promise<ReturnType<T>> => {
-    const cached = poketwoCache.get<ReturnType<T>>(`${key}:${id}`);
-    if (cached) return cached;
-    const val = await func(id);
-    poketwoCache.set(`${key}:${id}`, val);
-    return val;
-  };
-};
-
-export const fetchPoketwoMember = wrapPoketwoCache(
+export const fetchPoketwoMember = wrapCache<PoketwoMember>(
+  poketwoCache,
   "member",
   async (id: string): Promise<PoketwoMember | undefined> => {
     const db = await poketwoDbPromise;
@@ -98,7 +109,7 @@ export const fetchPoketwoMember = wrapPoketwoCache(
       ...result,
       _id: result._id.toString(),
     };
-  },
+  }
 );
 
 export const fetchGuild = async (id: string) => {
