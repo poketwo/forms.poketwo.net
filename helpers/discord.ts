@@ -22,8 +22,11 @@ export const fetchServerBan = async (userId: string): Promise<boolean> => {
     clearTimeout(timeout);
   }
 
-  if (response.status === 200) return true;
-  if (response.status === 404) return false;
+  const status = response.status;
+  await response.body?.cancel();
 
-  throw new Error(`Discord ban lookup failed with status ${response.status}`);
+  if (status === 200) return true;
+  if (status === 404) return false;
+
+  throw new Error(`Discord ban lookup failed with status ${status}`);
 };
