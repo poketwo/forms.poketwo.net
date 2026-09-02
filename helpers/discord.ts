@@ -5,14 +5,22 @@ export const fetchServerBan = async (userId: string): Promise<boolean> => {
   const token = process.env.GUIDUCK_BOT_TOKEN;
   if (!token) throw new Error("GUIDUCK_BOT_TOKEN is not configured");
 
-  const response = await fetch(
-    `${DISCORD_API_BASE_URL}/guilds/${POKETWO_GUILD_ID}/bans/${userId}`,
-    {
-      headers: {
-        Authorization: `Bot ${token}`,
-      },
-    }
-  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  let response: Response;
+  try {
+    response = await fetch(
+      `${DISCORD_API_BASE_URL}/guilds/${POKETWO_GUILD_ID}/bans/${userId}`,
+      {
+        headers: {
+          Authorization: `Bot ${token}`,
+        },
+        signal: controller.signal,
+      }
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (response.status === 200) return true;
   if (response.status === 404) return false;
