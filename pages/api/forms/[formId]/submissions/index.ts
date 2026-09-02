@@ -3,7 +3,7 @@ import { Long } from "mongodb";
 import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
-import { createSubmission } from "~helpers/db";
+import { createSubmission, fetchMember, fetchPoketwoMember } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { Submission } from "~helpers/types";
 import {
@@ -45,8 +45,18 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const user = req.session.user;
   if (!user) return res.status(401);
 
-  if (formId === "ban-appeal" && req.session.member) {
-    return res.status(403).send("You can only submit a ban appeal if you are banned");
+  if (formId === "ban-appeal") {
+    const member = await fetchMember(user.id, { refresh: true });
+    if (member) {
+      return res.status(403).send("You can only submit a ban appeal if you are banned");
+    }
+  }
+
+  if (formId === "suspension-appeal") {
+    const member = await fetchPoketwoMember(user.id, { refresh: true });
+    if (!member?.suspended) {
+      return res.status(403).send("You can only submit a suspension appeal if you are suspended");
+    }
   }
 
   if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {

@@ -18,7 +18,7 @@ import { VideoEvidenceProvider } from "~components/VideoEvidenceSlot";
 import components from "~components/formium";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import MainLayout from "~components/layouts/MainLayout";
-import { fetchSubmissions } from "~helpers/db";
+import { fetchMember, fetchPoketwoMember, fetchSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SubmissionStatus, User } from "~helpers/types";
@@ -277,8 +277,6 @@ export default FormPage;
 export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ req, params }) => {
   const id = params?.formId?.toString();
   const user = req.session.user;
-  const member = req.session.member;
-  const poketwoMember = req.session.poketwoMember;
 
   if (!id) throw new Error("Form ID not found");
   if (!user) throw new Error("User not found");
@@ -301,7 +299,14 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
     submissions.length > 0
       ? parseInt(submissions[0]._id.toString().substring(0, 8), 16) * 1000
       : null;
-  const suspended = poketwoMember?.suspended ?? false;
+  const serverMember =
+    id === "ban-appeal"
+      ? (await fetchMember(user.id, { refresh: true })) !== undefined
+      : false;
+  const suspended =
+    id === "suspension-appeal"
+      ? (await fetchPoketwoMember(user.id, { refresh: true }))?.suspended ?? false
+      : false;
 
   return {
     props: {
@@ -309,7 +314,7 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
       user,
       previous,
       submissionTimestamp,
-      serverMember: member !== undefined,
+      serverMember,
       suspended,
     },
   };
