@@ -5,7 +5,7 @@ import { NextApiResponse } from "next";
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 import { fetchSubmission, updateSubmission } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
+import { canFlagSubmissions, hasFullAccess } from "~helpers/permissions";
 import { Submission, SubmissionStatus } from "~helpers/types";
 
 const FLAG_STATUSES = [
@@ -65,9 +65,9 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   if (!user || !member) return res.status(401);
 
   const full = hasFullAccess(member, formId);
-  const permitted = permittedToViewForm(member, formId);
+  const canFlag = canFlagSubmissions(member, formId);
 
-  if (!permitted) return res.status(403).end();
+  if (!canFlag) return res.status(403).end();
   if (!full && !FLAG_STATUSES.includes(req.body.status)) return res.status(403).end();
 
   const submission = await fetchSubmission(submissionId);
