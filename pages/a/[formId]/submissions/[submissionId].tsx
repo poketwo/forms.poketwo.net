@@ -42,7 +42,7 @@ import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
 import { getFirstPageFieldSlugs } from "~helpers/form";
-import { canFlagSubmissions, hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpers/permissions";
+import { hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
   SerializableSubmission,
@@ -371,11 +371,10 @@ type SubmissionPageProps = {
   submission: SerializableSubmission;
   userSubmissions: SerializableSubmission[];
   fullAccess: boolean;
-  canFlag: boolean;
   fullContent: boolean;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, canFlag, fullContent }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, fullContent }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -424,7 +423,7 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
-          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={canFlag} fullAccess={fullAccess} />
+          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
           <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullContent} />
@@ -499,7 +498,6 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
       .map(makeSerializable);
 
     const fullAccess = hasFullAccess(member, formId);
-    const canFlag = canFlagSubmissions(member, formId);
     const fullContent = hasFullContentAccess(member, formId);
     const serializedSubmission = makeSerializable(submission);
 
@@ -522,7 +520,6 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         submission: serializedSubmission,
         userSubmissions,
         fullAccess,
-        canFlag,
         fullContent,
       },
     };

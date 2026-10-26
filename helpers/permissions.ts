@@ -14,25 +14,15 @@ const fullAccessRoles: Record<string, string[]> = {
 
 const restrictedAccessRoles: Record<string, string[]> = {
   "moderator-application": [manager, trialManager],
-  "suspension-appeal": [admin],
-};
-
-const viewOnlyRoles: Record<string, string[]> = {
   "ban-appeal": [trialManager],
+  "suspension-appeal": [admin],
 };
 
 export const permittedToViewForm = (member: Member, formId: string) => {
   const roles = member.roles ?? [];
   const fullRoles = fullAccessRoles[formId] ?? [];
   const restrictedRoles = restrictedAccessRoles[formId] ?? [];
-  const viewRoles = viewOnlyRoles[formId] ?? [];
-  return roles.some((role) => [...fullRoles, ...restrictedRoles, ...viewRoles].includes(role));
-};
-
-export const canFlagSubmissions = (member: Member, formId: string) => {
-  const roles = member.roles ?? [];
-  const flagRoles = [...(fullAccessRoles[formId] ?? []), ...(restrictedAccessRoles[formId] ?? [])];
-  return roles.some((role) => flagRoles.includes(role));
+  return roles.some((role) => [...fullRoles, ...restrictedRoles].includes(role));
 };
 
 export const hasFullAccess = (member: Member, formId: string) => {
@@ -41,7 +31,7 @@ export const hasFullAccess = (member: Member, formId: string) => {
   return roles.some((role) => fullRoles.includes(role));
 };
 
-// Forms whose first page holds demographic details, hidden from non-full-access roles.
+// Forms whose first page holds demographic details, hidden from restricted roles.
 const redactedForms = ["moderator-application"];
 
 export const hasFullContentAccess = (member: Member, formId: string) =>
