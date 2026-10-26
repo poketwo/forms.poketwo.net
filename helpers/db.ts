@@ -67,19 +67,19 @@ export const fetchMember = wrapCache<Member>(
       _id: { id: Long.fromString(id), guild_id: Long.fromString("716390832034414685") },
     });
 
-    let roles = result?.roles?.map((x) => x.toString());
+    // Fail closed: guiduck's cached roles are stale, so never fall back to them.
+    let roles: string[] | null;
     try {
-      roles = (await fetchServerMemberRoles(id)) ?? [];
+      roles = await fetchServerMemberRoles(id);
     } catch (err) {
       console.error(err);
+      return undefined;
     }
-
-    if (!result && !roles?.length) return undefined;
 
     return {
       ...result,
       _id: result ? result._id.toString() : id,
-      roles,
+      roles: roles ?? [],
     };
   }
 );
