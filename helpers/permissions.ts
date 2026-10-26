@@ -3,8 +3,8 @@ import { Member } from "./types";
 const admin = "718006431231508481";
 const serverManager = "1219500880534179892";
 const botManager = "1219501453240959006";
-const manager = "1556701034921992322";
-const trialManager = "1483963509275623444";
+const manager = "1483963509275623444";
+const trialManager = "1556701034921992322";
 
 const fullAccessRoles: Record<string, string[]> = {
   "moderator-application": [admin, serverManager],
