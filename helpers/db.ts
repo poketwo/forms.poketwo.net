@@ -3,6 +3,7 @@ import { getUnixTime, sub } from "date-fns";
 import { Long, MongoClient, UpdateFilter } from "mongodb";
 import NodeCache from "node-cache";
 
+import { fetchServerMemberRoles } from "./discord";
 import {
   Member,
   RawMember,
@@ -65,13 +66,19 @@ export const fetchMember = wrapCache<Member>(
     const result = <RawMember | null>await collection.findOne({
       _id: { id: Long.fromString(id), guild_id: Long.fromString("716390832034414685") },
     });
-    if (!result) return undefined;
 
-    const roles = result.roles?.map((x) => x.toString());
+    let roles = result?.roles?.map((x) => x.toString());
+    try {
+      roles = (await fetchServerMemberRoles(id)) ?? [];
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (!result && !roles?.length) return undefined;
 
     return {
       ...result,
-      _id: result._id.toString(),
+      _id: result ? result._id.toString() : id,
       roles,
     };
   }
