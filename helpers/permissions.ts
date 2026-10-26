@@ -3,17 +3,18 @@ import { Member } from "./types";
 const admin = "718006431231508481";
 const serverManager = "1219500880534179892";
 const botManager = "1219501453240959006";
-const seniorModerator = "1483963509275623444";
+const manager = "1556701034921992322";
+const trialManager = "1483963509275623444";
 
 const fullAccessRoles: Record<string, string[]> = {
   "moderator-application": [admin, serverManager],
-  "ban-appeal": [admin, serverManager],
+  "ban-appeal": [admin, serverManager, manager],
   "suspension-appeal": [admin, botManager],
 };
 
 const restrictedAccessRoles: Record<string, string[]> = {
-  "moderator-application": [seniorModerator],
-  "ban-appeal": [seniorModerator],
+  "moderator-application": [manager, trialManager],
+  "ban-appeal": [trialManager],
   "suspension-appeal": [admin],
 };
 
