@@ -4,11 +4,10 @@ import Link from "next/link";
 import { HiChevronRight } from "react-icons/hi";
 
 import MainLayout from "~components/layouts/MainLayout";
+import { ENABLED_FORMS } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { User } from "~helpers/types";
-
-const FORMS = ["moderator-application", "ban-appeal", "suspension-appeal"];
 
 type FormCardProps = {
   form: Form;
@@ -60,7 +59,7 @@ export const getServerSideProps = withServerSideSession<DashboardProps>(async ({
   const user = req.session.user;
   if (!user) throw new Error("User not found");
 
-  const forms = await Promise.all(FORMS.map((x) => formium.getFormBySlug(x)));
+  const forms = await Promise.all(ENABLED_FORMS.map((x) => formium.getFormBySlug(x)));
   return {
     props: {
       user,

@@ -4,6 +4,7 @@ import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 import { fetchSubmission, updateSubmission } from "~helpers/db";
+import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
 import { Submission, SubmissionStatus } from "~helpers/types";
@@ -56,6 +57,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const { formId, submissionId } = req.query;
   if (req.method !== "PATCH") return res.status(405).send("Method not allowed");
   if (typeof formId !== "string") return res.status(400).end();
+  if (!isEnabledForm(formId)) return res.status(404).end();
   if (typeof submissionId !== "string") return res.status(400).end();
 
   if (typeof req.body.status !== "number") return res.status(400).end();

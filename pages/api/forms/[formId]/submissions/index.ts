@@ -5,6 +5,7 @@ import { NextApiResponse } from "next";
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
 import { createSubmission, fetchPoketwoMember } from "~helpers/db";
 import { fetchServerBan } from "~helpers/discord";
+import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { Submission } from "~helpers/types";
 import {
@@ -42,6 +43,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const { formId } = req.query;
   if (req.method !== "POST") return res.status(405).send("Method not allowed");
   if (typeof formId !== "string") return res.status(400).end();
+  if (!isEnabledForm(formId)) return res.status(404).end();
 
   const user = req.session.user;
   if (!user) return res.status(401);
