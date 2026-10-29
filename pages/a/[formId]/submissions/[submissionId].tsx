@@ -41,7 +41,7 @@ import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { getFirstPageFieldSlugs } from "~helpers/form";
+import { getFirstPageFieldSlugs, isEnabledForm } from "~helpers/form";
 import { hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
@@ -464,6 +464,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     const user = req.session.user;
     const member = req.session.member;
     if (!user || !member) throw new Error("User not found");
+    if (!isEnabledForm(formId)) return { notFound: true };
 
     if (!permittedToViewForm(member, formId)) {
       return { redirect: { permanent: false, destination: "/dashboard" } };

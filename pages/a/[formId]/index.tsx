@@ -20,6 +20,7 @@ import ErrorAlert from "~components/formium/ErrorAlert";
 import MainLayout from "~components/layouts/MainLayout";
 import { fetchPoketwoMember, fetchSubmissions } from "~helpers/db";
 import { fetchServerBan } from "~helpers/discord";
+import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SubmissionStatus, User } from "~helpers/types";
@@ -305,6 +306,7 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
 
   if (!id) throw new Error("Form ID not found");
   if (!user) throw new Error("User not found");
+  if (!isEnabledForm(id)) return { notFound: true };
 
   let form;
   try {

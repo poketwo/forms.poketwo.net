@@ -12,11 +12,10 @@ import { HiChevronRight } from "react-icons/hi";
 
 import MainLayout from "~components/layouts/MainLayout";
 import { fetchUserSubmissions } from "~helpers/db";
+import { ENABLED_FORMS, isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SubmissionStatus, User, makeSerializable } from "~helpers/types";
-
-const FORMS = ["moderator-application", "ban-appeal", "suspension-appeal"];
 
 const STATUS_LABELS: { [key in SubmissionStatus]: string } = {
   [SubmissionStatus.UNDER_REVIEW]: "Under Review",
@@ -116,13 +115,13 @@ export const getServerSideProps = withServerSideSession<MySubmissionsProps>(asyn
 
   const _submissions = await fetchUserSubmissions(user.id);
   const submissions = await _submissions.toArray();
-  const serialized = submissions.map(makeSerializable);
+  const serialized = submissions.filter((x) => isEnabledForm(x.form_id)).map(makeSerializable);
 
-  const formResults = await Promise.allSettled(FORMS.map((slug) => formium.getFormBySlug(slug)));
+  const formResults = await Promise.allSettled(ENABLED_FORMS.map((slug) => formium.getFormBySlug(slug)));
   const formNames: { [key: string]: string } = {};
   formResults.forEach((result, i) => {
     if (result.status === "fulfilled") {
-      formNames[FORMS[i]] = result.value.name;
+      formNames[ENABLED_FORMS[i]] = result.value.name;
     }
   });
 

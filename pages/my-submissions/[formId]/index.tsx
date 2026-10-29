@@ -3,6 +3,7 @@ import { Form } from "@formium/types";
 
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchUserFormSubmissions } from "~helpers/db";
+import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SerializableSubmission, User, makeSerializable } from "~helpers/types";
@@ -45,6 +46,7 @@ export const getServerSideProps = withServerSideSession<UserSubmissionsPageProps
 
     const user = req.session.user;
     if (!user) throw new Error("User not found");
+    if (!isEnabledForm(formId)) return { notFound: true };
 
     let form;
     try {

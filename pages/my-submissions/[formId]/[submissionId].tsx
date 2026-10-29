@@ -7,6 +7,7 @@ import {
   fetchSubmission,
   fetchUserFormSubmissions,
 } from "~helpers/db";
+import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SerializableSubmission, SubmissionStatus, User, makeSerializable } from "~helpers/types";
@@ -120,6 +121,7 @@ export const getServerSideProps = withServerSideSession<UserSubmissionPageProps,
 
     const user = req.session.user;
     if (!user) throw new Error("User not found");
+    if (!isEnabledForm(formId)) return { notFound: true };
 
     let form;
     try {

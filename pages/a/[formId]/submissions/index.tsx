@@ -3,6 +3,7 @@ import { Form } from "@formium/types";
 
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmissions } from "~helpers/db";
+import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
@@ -42,6 +43,7 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps, Su
     const user = req.session.user;
     const member = req.session.member;
     if (!user || !member) throw new Error("User not found");
+    if (!isEnabledForm(formId)) return { notFound: true };
 
     if (!permittedToViewForm(member, formId)) {
       return { redirect: { permanent: false, destination: "/dashboard" } };
