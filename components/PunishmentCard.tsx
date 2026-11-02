@@ -1,6 +1,6 @@
 import { Stack, Text, useColorModeValue } from "@chakra-ui/react";
 
-import { AppealFormId } from "~helpers/punishment";
+import { AppealFormId } from "~helpers/form";
 import { Punishment, PunishmentRecord } from "~helpers/types";
 
 const LABELS: { [key in AppealFormId]: { title: string; source: string; lifted: string } } = {

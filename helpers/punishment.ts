@@ -1,13 +1,7 @@
 import { fetchPoketwoMember } from "~helpers/db";
 import { fetchServerBan } from "~helpers/discord";
+import { AppealFormId } from "~helpers/form";
 import { PoketwoMember, Punishment, PunishmentRecord } from "~helpers/types";
-
-const APPEAL_FORMS = ["ban-appeal", "suspension-appeal"] as const;
-
-export type AppealFormId = (typeof APPEAL_FORMS)[number];
-
-export const isAppealForm = (formId: string): formId is AppealFormId =>
-  (APPEAL_FORMS as readonly string[]).includes(formId);
 
 const isActive = (until: Date | null | undefined, now: Date) => !until || until > now;
 

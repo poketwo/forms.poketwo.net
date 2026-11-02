@@ -42,9 +42,9 @@ import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { getFirstPageFieldSlugs, isEnabledForm } from "~helpers/form";
+import { getFirstPageFieldSlugs, isAppealForm, isEnabledForm } from "~helpers/form";
 import { hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpers/permissions";
-import { fetchPunishment, isAppealForm } from "~helpers/punishment";
+import { fetchPunishment } from "~helpers/punishment";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
   Punishment,
