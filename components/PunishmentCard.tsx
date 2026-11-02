@@ -30,15 +30,26 @@ const formatRecord = (record: PunishmentRecord) =>
   (record.reason ?? "No reason given") +
   (record.until ? ` (until ${formatUntil(record.until)})` : "");
 
-type RowProps = { label: string; value: string };
+const describe = (punishment: Punishment, lifted: string) => {
+  const { account, network } = punishment;
+  const lines = [];
+  if (account) lines.push(formatRecord(account));
+  if (network) {
+    const kind = NETWORK_KIND_LABELS[network.kind] ?? network.kind;
+    lines.push(`Network suspension (${kind}): ${formatRecord(network)}`);
+  }
+  return lines.length > 0 ? lines : [lifted];
+};
 
-const Row = ({ label, value }: RowProps) => (
-  <Text>
-    <Text as="span" color="gray.500">
-      {label}:
-    </Text>{" "}
-    {value}
-  </Text>
+type RowProps = { label: string; lines: string[] };
+
+const Row = ({ label, lines }: RowProps) => (
+  <Stack spacing="0">
+    <Text color="gray.500">{label}</Text>
+    {lines.map((line) => (
+      <Text key={line}>{line}</Text>
+    ))}
+  </Stack>
 );
 
 type PunishmentCardProps = {
@@ -52,7 +63,6 @@ const PunishmentCard = ({ formId, submitted, live }: PunishmentCardProps) => {
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
   const labels = LABELS[formId];
-  const network = live?.network ?? submitted?.network;
 
   return (
     <Stack shadow={shadow} bg={bg} rounded="md" p="4" alignItems="flex-start">
@@ -69,23 +79,11 @@ const PunishmentCard = ({ formId, submitted, live }: PunishmentCardProps) => {
         {labels.title}
       </Text>
 
-      {submitted?.account && <Row label="When submitted" value={formatRecord(submitted.account)} />}
+      {submitted && <Row label="When submitted" lines={describe(submitted, labels.lifted)} />}
       <Row
         label="Now"
-        value={
-          live === null
-            ? `Couldn't reach ${labels.source}`
-            : live.account
-            ? formatRecord(live.account)
-            : labels.lifted
-        }
+        lines={live === null ? [`Couldn't reach ${labels.source}`] : describe(live, labels.lifted)}
       />
-      {network && (
-        <Row
-          label={`Network suspension (${NETWORK_KIND_LABELS[network.kind] ?? network.kind})`}
-          value={formatRecord(network)}
-        />
-      )}
     </Stack>
   );
 };
