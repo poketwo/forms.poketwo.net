@@ -42,6 +42,7 @@ import SubmissionNotes from "~components/SubmissionNotes";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
+import { fetchAccountDeleted } from "~helpers/discord";
 import { formium } from "~helpers/formium";
 import { getFirstPageFieldSlugs, isAppealForm, isEnabledForm } from "~helpers/form";
 import { hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpers/permissions";
@@ -148,9 +149,10 @@ type SubmissionHeaderProps = {
   onSetStatus: (status: SubmissionStatus) => Promise<void> | void;
   canFlag?: boolean;
   fullAccess?: boolean;
+  accountDeleted: boolean;
 };
 
-const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess }: SubmissionHeaderProps) => {
+const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess, accountDeleted }: SubmissionHeaderProps) => {
   const [name, discrim] = submission.user_tag.split("#", 2);
 
   return (
@@ -168,6 +170,8 @@ const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess }: Subm
               #{discrim}
             </chakra.span>
           </Heading>
+
+          {accountDeleted && <Tag colorScheme="red">Account deleted</Tag>}
 
           <Text fontSize="sm" color="gray.500">
             {submission.user_id}
@@ -388,9 +392,10 @@ type SubmissionPageProps = {
   fullContent: boolean;
   submittedPunishment: Punishment | null;
   livePunishment: Punishment | null;
+  accountDeleted: boolean;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmissions, fullAccess, fullContent, submittedPunishment, livePunishment }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmissions, fullAccess, fullContent, submittedPunishment, livePunishment, accountDeleted }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [subNotes, setSubNotes] = useState(notes);
@@ -450,7 +455,7 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
     >
       <Flex direction="column" h="full" overflow="hidden">
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
-          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} />
+          <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} accountDeleted={accountDeleted} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
           {isAppealForm(form.slug) && (
@@ -540,12 +545,11 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     const fullContent = hasFullContentAccess(member, formId);
     const serializedSubmission = makeSerializable(submission);
 
-    let livePunishment: Punishment | null = null;
-    if (isAppealForm(formId)) {
-      try {
-        livePunishment = await fetchPunishment(formId, serializedSubmission.user_id);
-      } catch {}
-    }
+    const userId = serializedSubmission.user_id;
+    const [livePunishment, accountDeleted] = await Promise.all([
+      isAppealForm(formId) ? fetchPunishment(formId, userId).catch(() => null) : null,
+      fetchAccountDeleted(userId).catch(() => false),
+    ]);
 
     if (!fullContent) {
       const firstPageSlugs = getFirstPageFieldSlugs(form);
@@ -570,6 +574,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         fullContent,
         submittedPunishment: submission.punishment ?? null,
         livePunishment,
+        accountDeleted,
       },
     };
   },
