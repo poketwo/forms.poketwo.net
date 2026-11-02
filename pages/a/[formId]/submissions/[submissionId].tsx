@@ -171,8 +171,6 @@ const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess, accoun
             </chakra.span>
           </Heading>
 
-          {accountDeleted && <Tag colorScheme="red">Account deleted</Tag>}
-
           <Text fontSize="sm" color="gray.500">
             {submission.user_id}
           </Text>
@@ -223,6 +221,12 @@ const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess, accoun
           </LightMode>
         )}
       </HStack>
+
+      {accountDeleted && (
+        <Tag alignSelf="flex-start" colorScheme="red">
+          Account deleted
+        </Tag>
+      )}
 
       {submission.comment && (
         <Alert
