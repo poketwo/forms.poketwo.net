@@ -62,7 +62,9 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
 
   if (typeof req.body.status !== "number") return res.status(400).end();
 
-  const noteText = typeof req.body.note === "string" ? req.body.note.trim() : "";
+  const rawNote: unknown = req.body.note;
+  if (rawNote != null && typeof rawNote !== "string") return res.status(400).end();
+  const noteText = rawNote?.trim() ?? "";
   if (noteText && !isFlagStatus(req.body.status)) return res.status(400).end();
   if (noteText.length > MAX_NOTE_LENGTH) return res.status(400).end();
 
