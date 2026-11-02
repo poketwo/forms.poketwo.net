@@ -31,14 +31,33 @@ export type Member = {
   roles?: string[];
 };
 
+export type NetworkSuspension = {
+  kind: string;
+  reason?: string | null;
+  until?: Date | null;
+};
+
 export type RawPoketwoMember = {
   _id: Long;
   suspended?: boolean;
+  suspended_until?: Date;
+  suspension_reason?: string | null;
+  network_suspension?: NetworkSuspension | null;
 };
 
-export type PoketwoMember = {
+export type PoketwoMember = Omit<RawPoketwoMember, "_id"> & {
   _id: string;
-  suspended?: boolean;
+};
+
+export type PunishmentRecord = {
+  reason: string | null;
+  // ISO timestamp; null means permanent.
+  until: string | null;
+};
+
+export type Punishment = {
+  account: PunishmentRecord | null;
+  network: (PunishmentRecord & { kind: string }) | null;
 };
 
 export enum Position {
@@ -71,6 +90,7 @@ export type Submission<T = any> = {
   embedded_id?: Long;
   reviewer_id?: Long;
   comment?: string;
+  punishment?: Punishment;
 };
 
 export type SerializableSubmission<T = any> = {

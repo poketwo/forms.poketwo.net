@@ -36,15 +36,18 @@ import { FormEvent, ReactElement, useEffect, useState } from "react";
 import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 
 import Link from "next/link";
+import PunishmentCard from "~components/PunishmentCard";
 import SubmissionContent from "~components/SubmissionContent";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { formium } from "~helpers/formium";
-import { getFirstPageFieldSlugs, isEnabledForm } from "~helpers/form";
+import { getFirstPageFieldSlugs, isAppealForm, isEnabledForm } from "~helpers/form";
 import { hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpers/permissions";
+import { fetchPunishment } from "~helpers/punishment";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
+  Punishment,
   SerializableSubmission,
   SubmissionStatus,
   User,
@@ -372,9 +375,11 @@ type SubmissionPageProps = {
   userSubmissions: SerializableSubmission[];
   fullAccess: boolean;
   fullContent: boolean;
+  submittedPunishment: Punishment | null;
+  livePunishment: Punishment | null;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, fullContent }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, fullContent, submittedPunishment, livePunishment }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -426,6 +431,11 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
           <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} />
         </Box>
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
+          {isAppealForm(form.slug) && (
+            <Box mb="4">
+              <PunishmentCard formId={form.slug} submitted={submittedPunishment} live={livePunishment} />
+            </Box>
+          )}
           <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullContent} />
 
           {userSubmissions.length > 0 && (
@@ -502,6 +512,13 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
     const fullContent = hasFullContentAccess(member, formId);
     const serializedSubmission = makeSerializable(submission);
 
+    let livePunishment: Punishment | null = null;
+    if (isAppealForm(formId)) {
+      try {
+        livePunishment = await fetchPunishment(formId, serializedSubmission.user_id);
+      } catch {}
+    }
+
     if (!fullContent) {
       const firstPageSlugs = getFirstPageFieldSlugs(form);
       const filteredData = Object.fromEntries(
@@ -522,6 +539,8 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         userSubmissions,
         fullAccess,
         fullContent,
+        submittedPunishment: submission.punishment ?? null,
+        livePunishment,
       },
     };
   },

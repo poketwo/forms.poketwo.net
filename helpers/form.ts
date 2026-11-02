@@ -4,6 +4,13 @@ export const ENABLED_FORMS = ["moderator-application", "ban-appeal", "suspension
 
 export const isEnabledForm = (formId: string) => ENABLED_FORMS.includes(formId);
 
+const APPEAL_FORMS = ["ban-appeal", "suspension-appeal"] as const;
+
+export type AppealFormId = (typeof APPEAL_FORMS)[number];
+
+export const isAppealForm = (formId: string): formId is AppealFormId =>
+  (APPEAL_FORMS as readonly string[]).includes(formId);
+
 export const getFirstPageFieldSlugs = (form: Form): Set<string> => {
   const schema = form.schema;
   if (!schema?.pageIds?.length) return new Set();

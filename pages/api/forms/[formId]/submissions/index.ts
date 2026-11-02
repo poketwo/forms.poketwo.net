@@ -3,11 +3,11 @@ import { Long } from "mongodb";
 import { NextApiResponse } from "next";
 
 import { AuthMode, NextIronRequest, withSession } from "helpers/session";
-import { createSubmission, fetchPoketwoMember } from "~helpers/db";
-import { fetchServerBan } from "~helpers/discord";
+import { createSubmission } from "~helpers/db";
 import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
-import { Submission } from "~helpers/types";
+import { fetchBanPunishment, fetchSuspensionPunishment, isPermanent } from "~helpers/punishment";
+import { Punishment, Submission } from "~helpers/types";
 import {
   MAX_VIDEO_EVIDENCE_LINKS,
   VIDEO_EVIDENCE_FIELD,
@@ -48,22 +48,23 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const user = req.session.user;
   if (!user) return res.status(401);
 
+  let punishment: Punishment | undefined;
+
   if (formId === "ban-appeal") {
-    let serverBanned;
     try {
-      serverBanned = await fetchServerBan(user.id);
+      punishment = await fetchBanPunishment(user.id);
     } catch {
       return res.status(503).send("Unable to verify your Discord ban status");
     }
 
-    if (!serverBanned) {
+    if (!punishment.account) {
       return res.status(403).send("You can only submit a ban appeal if you are banned");
     }
   }
 
   if (formId === "suspension-appeal") {
-    const member = await fetchPoketwoMember(user.id, { refresh: true });
-    if (!member?.suspended) {
+    punishment = await fetchSuspensionPunishment(user.id);
+    if (!isPermanent(punishment.account)) {
       return res.status(403).send("You can only submit a suspension appeal if you are suspended");
     }
   }
@@ -100,6 +101,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
     user_tag: `${user.username}#${user.discriminator}`,
     email: user.email,
     data,
+    ...(punishment && { punishment }),
   };
 
   const { insertedId } = await createSubmission(_submission);
