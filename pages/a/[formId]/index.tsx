@@ -329,7 +329,7 @@ export const getServerSideProps = withServerSideSession<FormPageProps>(async ({ 
   let serverBanned: boolean | null = false;
   if (id === "ban-appeal") {
     try {
-      serverBanned = await fetchServerBan(user.id);
+      serverBanned = (await fetchServerBan(user.id)) !== null;
     } catch {
       serverBanned = null;
     }

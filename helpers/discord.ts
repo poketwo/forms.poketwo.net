@@ -19,14 +19,21 @@ const fetchDiscord = async (path: string) => {
   }
 };
 
-export const fetchServerBan = async (userId: string): Promise<boolean> => {
+export type ServerBan = { reason: string | null };
+
+// Returns null if the user isn't banned.
+export const fetchServerBan = async (userId: string): Promise<ServerBan | null> => {
   const response = await fetchDiscord(`/guilds/${POKETWO_GUILD_ID}/bans/${userId}`);
+
+  if (response.status === 200) {
+    const data: ServerBan = await response.json();
+    return { reason: data.reason };
+  }
 
   const status = response.status;
   await response.body?.cancel();
 
-  if (status === 200) return true;
-  if (status === 404) return false;
+  if (status === 404) return null;
 
   throw new Error(`Discord ban lookup failed with status ${status}`);
 };
