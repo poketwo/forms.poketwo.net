@@ -55,3 +55,26 @@ export const fetchServerMemberRoles = async (userId: string): Promise<string[] |
 
   throw new Error(`Discord member lookup failed with status ${status}`);
 };
+type DiscordUser = { username: string; discriminator: string };
+
+// Discord has no deleted flag; deleted accounts get a placeholder username instead.
+const DELETED_USERNAME = /^deleted_user_[0-9a-f]+$/;
+const LEGACY_DELETED_USERNAME_PREFIX = "Deleted User";
+const LEGACY_DELETED_DISCRIMINATOR = "0000";
+
+const isDeletedUser = (user: DiscordUser) =>
+  DELETED_USERNAME.test(user.username) ||
+  (user.username.startsWith(LEGACY_DELETED_USERNAME_PREFIX) &&
+    user.discriminator === LEGACY_DELETED_DISCRIMINATOR);
+
+export const fetchAccountDeleted = async (userId: string): Promise<boolean> => {
+  const response = await fetchDiscord(`/users/${userId}`);
+
+  if (!response.ok) {
+    const status = response.status;
+    await response.body?.cancel();
+    throw new Error(`Discord user lookup failed with status ${status}`);
+  }
+
+  return isDeletedUser(await response.json());
+};
