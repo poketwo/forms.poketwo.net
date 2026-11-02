@@ -375,10 +375,11 @@ type SubmissionPageProps = {
   userSubmissions: SerializableSubmission[];
   fullAccess: boolean;
   fullContent: boolean;
+  submittedPunishment: Punishment | null;
   livePunishment: Punishment | null;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, fullContent, livePunishment }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, fullContent, submittedPunishment, livePunishment }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
@@ -432,7 +433,7 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
         <Box flex="1" overflow="auto" p="6" zIndex={0}>
           {isAppealForm(form.slug) && (
             <Box mb="4">
-              <PunishmentCard formId={form.slug} submitted={sub.punishment} live={livePunishment} />
+              <PunishmentCard formId={form.slug} submitted={submittedPunishment} live={livePunishment} />
             </Box>
           )}
           <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullContent} />
@@ -538,6 +539,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         userSubmissions,
         fullAccess,
         fullContent,
+        submittedPunishment: submission.punishment ?? null,
         livePunishment,
       },
     };
