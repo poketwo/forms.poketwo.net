@@ -38,6 +38,7 @@ import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 import Link from "next/link";
 import PunishmentCard from "~components/PunishmentCard";
 import SubmissionContent from "~components/SubmissionContent";
+import SubmissionNotes from "~components/SubmissionNotes";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
@@ -47,25 +48,18 @@ import { hasFullAccess, hasFullContentAccess, permittedToViewForm } from "~helpe
 import { fetchPunishment } from "~helpers/punishment";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import {
+  FLAG_COLORS,
   Punishment,
   SerializableSubmission,
+  SerializableSubmissionNote,
   SubmissionStatus,
   User,
+  isFlagStatus,
   makeSerializable,
+  makeSerializableNote,
 } from "~helpers/types";
 import { delay } from "~helpers/utils";
 import { supportsVideoEvidence } from "~helpers/videoEvidence";
-
-const COLORS = {
-  [SubmissionStatus.UNDER_REVIEW]: "gray",
-  [SubmissionStatus.ACCEPTED]: "gray",
-  [SubmissionStatus.REJECTED]: "gray",
-  [SubmissionStatus.MARKED_ORANGE]: "orange",
-  [SubmissionStatus.MARKED_YELLOW]: "yellow",
-  [SubmissionStatus.MARKED_BLUE]: "blue",
-  [SubmissionStatus.MARKED_PURPLE]: "purple",
-  [SubmissionStatus.MARKED_RED]: "red",
-}
 
 type HeaderButtonProps = ButtonProps & {
   icon: ReactElement;
@@ -137,7 +131,7 @@ const MarkColorIconButton = ({ status, onSetStatus }: MarkColorIconButtonProps) 
   return (
     <>
       <IconButton
-        colorScheme={COLORS[status]}
+        colorScheme={FLAG_COLORS[status]}
         aria-label="Orange"
         size="lg"
         icon={<HiFlag />}
@@ -195,7 +189,7 @@ const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess }: Subm
               <PopoverTrigger>
                 <div>
                   <HeaderButton
-                    colorScheme={COLORS[submission.status ?? SubmissionStatus.UNDER_REVIEW]}
+                    colorScheme={FLAG_COLORS[submission.status ?? SubmissionStatus.UNDER_REVIEW]}
                     icon={<HiFlag />}
                     label="Mark for Review"
                   />
@@ -317,18 +311,29 @@ const PreviousSubmissionCard = ({ submission, formSlug }: PreviousSubmissionCard
 
 type CommentModalProps = {
   isOpen: boolean;
+  isNote: boolean;
   onClose: () => void;
-  onSubmit: (comment: string) => void;
+  onSubmit: (comment: string) => Promise<void>;
 };
 
-const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
+const CommentModal = ({ isOpen, isNote, onClose, onSubmit }: CommentModalProps) => {
   const [comment, setComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | undefined>();
+  const kind = isNote ? "Note" : "Comment";
+
+  useEffect(() => {
+    if (isOpen) setComment("");
+  }, [isOpen]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await onSubmit(comment);
+    try {
+      await onSubmit(comment);
+    } catch (e) {
+      setError(e as Error);
+    }
     setIsLoading(false);
   };
 
@@ -336,20 +341,24 @@ const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add Comment</ModalHeader>
+        <ModalHeader>Add {kind}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <form id="comment" onSubmit={handleSubmit}>
             <FormControl>
-              <FormLabel>Comment</FormLabel>
+              <FormLabel>{kind}</FormLabel>
               <Textarea
                 name="comment"
-                placeholder="Enter comment..."
+                placeholder={`Enter ${kind.toLowerCase()}...`}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 height="200px"
               />
-              <FormHelperText>This comment will be sent to the submitter.</FormHelperText>
+              <FormHelperText>
+                {isNote
+                  ? "Only staff can see notes. Leave it blank to flag without a note."
+                  : "This comment will be sent to the submitter."}
+              </FormHelperText>
             </FormControl>
           </form>
         </ModalBody>
@@ -363,6 +372,7 @@ const CommentModal = ({ isOpen, onClose, onSubmit }: CommentModalProps) => {
           </Button>
         </ModalFooter>
       </ModalContent>
+      <ErrorAlert error={error} setError={setError} />
     </Modal>
   );
 };
@@ -372,6 +382,7 @@ type SubmissionPageProps = {
   form: Form;
   submissions: SerializableSubmission[];
   submission: SerializableSubmission;
+  notes: SerializableSubmissionNote[];
   userSubmissions: SerializableSubmission[];
   fullAccess: boolean;
   fullContent: boolean;
@@ -379,9 +390,10 @@ type SubmissionPageProps = {
   livePunishment: Punishment | null;
 };
 
-const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, fullAccess, fullContent, submittedPunishment, livePunishment }: SubmissionPageProps) => {
+const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmissions, fullAccess, fullContent, submittedPunishment, livePunishment }: SubmissionPageProps) => {
   const [subs, setSubs] = useState(submissions);
   const [sub, setSub] = useState(submission);
+  const [subNotes, setSubNotes] = useState(notes);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
 
   const bg = useColorModeValue("white", "gray.800");
@@ -389,14 +401,20 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
 
   useEffect(() => setSubs(submissions), [submissions]);
   useEffect(() => setSub(submission), [submission]);
+  useEffect(() => setSubNotes(notes), [notes]);
 
-  const updateStatus = async (status: SubmissionStatus, comment?: string) => {
+  const updateStatus = async (status: SubmissionStatus, text?: string) => {
+    const isNote = isFlagStatus(status);
+    const comment = isNote ? undefined : text;
     const resp = await fetch(`/api/forms/${form.slug}/submissions/${submission._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, comment }),
+      body: JSON.stringify({ status, comment, note: isNote ? text : undefined }),
     });
     if (!resp.ok) throw new Error(await resp.text());
+
+    const { note }: { note: SerializableSubmissionNote | null } = await resp.json();
+    if (note) setSubNotes((prev) => [...prev, note]);
 
     const listSub = submissions.find((x) => x._id === sub._id);
     if (listSub) listSub.status = status;
@@ -405,7 +423,11 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
   };
 
   const handleSetStatus = async (status: SubmissionStatus) => {
-    if (status === SubmissionStatus.ACCEPTED || status === SubmissionStatus.REJECTED) {
+    if (
+      status === SubmissionStatus.ACCEPTED ||
+      status === SubmissionStatus.REJECTED ||
+      isFlagStatus(status)
+    ) {
       setStatusWithComment(status);
     } else {
       await updateStatus(status);
@@ -436,6 +458,11 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
               <PunishmentCard formId={form.slug} submitted={submittedPunishment} live={livePunishment} />
             </Box>
           )}
+          {subNotes.length > 0 && (
+            <Box mb="4">
+              <SubmissionNotes notes={subNotes} />
+            </Box>
+          )}
           <SubmissionContent key={form.id} form={form} submission={sub} hideFirstPage={!fullContent} />
 
           {userSubmissions.length > 0 && (
@@ -452,6 +479,7 @@ const SubmissionPage = ({ user, form, submissions, submission, userSubmissions, 
       </Flex>
       <CommentModal
         isOpen={statusWithComment !== undefined}
+        isNote={statusWithComment !== undefined && isFlagStatus(statusWithComment)}
         onClose={() => setStatusWithComment(undefined)}
         onSubmit={handleSubmit}
       />
@@ -536,6 +564,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
         user,
         submissions: submissions.map(makeSerializable),
         submission: serializedSubmission,
+        notes: (submission.notes ?? []).map(makeSerializableNote),
         userSubmissions,
         fullAccess,
         fullContent,

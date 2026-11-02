@@ -79,6 +79,52 @@ export enum SubmissionStatus {
   MARKED_RED = 7,
 }
 
+export const FLAG_STATUSES = [
+  SubmissionStatus.MARKED_ORANGE,
+  SubmissionStatus.MARKED_YELLOW,
+  SubmissionStatus.MARKED_BLUE,
+  SubmissionStatus.MARKED_PURPLE,
+  SubmissionStatus.MARKED_RED,
+];
+
+export const isFlagStatus = (status: SubmissionStatus) => FLAG_STATUSES.includes(status);
+
+export const FLAG_COLORS: { [key in SubmissionStatus]: string } = {
+  [SubmissionStatus.UNDER_REVIEW]: "gray",
+  [SubmissionStatus.ACCEPTED]: "gray",
+  [SubmissionStatus.REJECTED]: "gray",
+  [SubmissionStatus.MARKED_ORANGE]: "orange",
+  [SubmissionStatus.MARKED_YELLOW]: "yellow",
+  [SubmissionStatus.MARKED_BLUE]: "blue",
+  [SubmissionStatus.MARKED_PURPLE]: "purple",
+  [SubmissionStatus.MARKED_RED]: "red",
+};
+
+// Staff-only: never include these in makeSerializable, which appellant pages also use.
+export type SubmissionNote = {
+  author_id: Long;
+  author_tag: string;
+  status: SubmissionStatus;
+  text: string;
+  created_at: Date;
+};
+
+export type SerializableSubmissionNote = {
+  author_id: string;
+  author_tag: string;
+  status: SubmissionStatus;
+  text: string;
+  created_at: string;
+};
+
+export const makeSerializableNote = (note: SubmissionNote): SerializableSubmissionNote => ({
+  author_id: note.author_id.toString(),
+  author_tag: note.author_tag,
+  status: note.status,
+  text: note.text,
+  created_at: note.created_at.toISOString(),
+});
+
 export type Submission<T = any> = {
   _id: ObjectId;
   form_id: string;
@@ -91,6 +137,7 @@ export type Submission<T = any> = {
   reviewer_id?: Long;
   comment?: string;
   punishment?: Punishment;
+  notes?: SubmissionNote[];
 };
 
 export type SerializableSubmission<T = any> = {
