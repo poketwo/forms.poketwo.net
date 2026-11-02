@@ -7,15 +7,15 @@ import { fetchSubmission, updateSubmission } from "~helpers/db";
 import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
-import { Submission, SubmissionStatus } from "~helpers/types";
+import {
+  Submission,
+  SubmissionNote,
+  SubmissionStatus,
+  isFlagStatus,
+  makeSerializableNote,
+} from "~helpers/types";
 
-const FLAG_STATUSES = [
-  SubmissionStatus.MARKED_ORANGE,
-  SubmissionStatus.MARKED_YELLOW,
-  SubmissionStatus.MARKED_BLUE,
-  SubmissionStatus.MARKED_PURPLE,
-  SubmissionStatus.MARKED_RED,
-];
+const MAX_NOTE_LENGTH = 2000;
 
 sendgrid.setApiKey(process.env.SENDGRID_KEY as string);
 
@@ -62,6 +62,12 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
 
   if (typeof req.body.status !== "number") return res.status(400).end();
 
+  const rawNote: unknown = req.body.note;
+  if (rawNote != null && typeof rawNote !== "string") return res.status(400).end();
+  const noteText = rawNote?.trim() ?? "";
+  if (noteText && !isFlagStatus(req.body.status)) return res.status(400).end();
+  if (noteText.length > MAX_NOTE_LENGTH) return res.status(400).end();
+
   const user = req.session.user;
   const member = req.session.member;
   if (!user || !member) return res.status(401);
@@ -70,7 +76,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const permitted = permittedToViewForm(member, formId);
 
   if (!permitted) return res.status(403).end();
-  if (!full && !FLAG_STATUSES.includes(req.body.status)) return res.status(403).end();
+  if (!full && !isFlagStatus(req.body.status)) return res.status(403).end();
 
   const submission = await fetchSubmission(submissionId);
   if (!submission) return res.status(404);
@@ -80,10 +86,20 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
     update = { ...update, comment: req.body.comment };
   }
 
-  await updateSubmission(submissionId, { $set: update });
+  const note: SubmissionNote | null = noteText
+    ? {
+        author_id: Long.fromString(user.id),
+        author_tag: user.username,
+        status: req.body.status,
+        text: noteText,
+        created_at: new Date(),
+      }
+    : null;
+
+  await updateSubmission(submissionId, note ? { $set: update, $push: { notes: note } } : { $set: update });
   await sendEmail(submission, formId, req.body.status, req.body.comment ?? "No comment provided.");
 
-  res.status(204).end();
+  res.status(200).json({ note: note && makeSerializableNote(note) });
 };
 
 export default withSession(handler, AuthMode.AUTHENTICATED);
