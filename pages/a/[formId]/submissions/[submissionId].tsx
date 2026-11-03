@@ -59,7 +59,7 @@ import {
   makeSerializable,
   makeSerializableNote,
 } from "~helpers/types";
-import { delay } from "~helpers/utils";
+import { delay, hasLegacyDiscriminator } from "~helpers/utils";
 import { supportsVideoEvidence } from "~helpers/videoEvidence";
 
 type HeaderButtonProps = ButtonProps & {
@@ -166,9 +166,11 @@ const SubmissionHeader = ({ submission, onSetStatus, canFlag, fullAccess, accoun
         >
           <Heading size="md">
             {name}
-            <chakra.span color="gray.500" fontWeight="medium">
-              #{discrim}
-            </chakra.span>
+            {hasLegacyDiscriminator(discrim) && (
+              <chakra.span color="gray.500" fontWeight="medium">
+                #{discrim}
+              </chakra.span>
+            )}
           </Heading>
 
           <Text fontSize="sm" color="gray.500">
