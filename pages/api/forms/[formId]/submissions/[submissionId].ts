@@ -14,6 +14,7 @@ import {
   isFlagStatus,
   makeSerializableNote,
 } from "~helpers/types";
+import { formatUserTag } from "~helpers/utils";
 
 const MAX_NOTE_LENGTH = 2000;
 
@@ -45,7 +46,7 @@ const sendEmail = async (
     from: "Pokétwo <noreply@poketwo.net>",
     templateId: "d-f5c582010b5a49368bbd391f50fcc393",
     dynamicTemplateData: {
-      user: submission.user_tag,
+      user: formatUserTag(submission.user_tag),
       form: form.name,
       status: EMAIL_UPDATES[status],
       comment,
