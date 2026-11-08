@@ -5,6 +5,9 @@ import absoluteUrl from "next-absolute-url";
 import oauth from "~helpers/oauth";
 import { AuthMode, NextIronRequest, saveSession, withSession } from "~helpers/session";
 
+const isLocalPath = (path: string | undefined): path is string =>
+  !!path && path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
+
 const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const id = req.session.id;
   if (!id) return res.status(401).end();
@@ -28,7 +31,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   req.session.user = <any>user;
   await saveSession(req.session);
 
-  res.redirect(next ?? "/");
+  res.redirect(isLocalPath(next) ? next : "/");
 };
 
 export default withSession(handler, AuthMode.NONE);
