@@ -121,6 +121,8 @@ export const withServerSideSession = <
     if (status === SessionStatus.REDIRECT_DASHBOARD) {
       return { redirect: { permanent: false, destination: "/dashboard" } };
     } else if (status === SessionStatus.REDIRECT_LOGIN) {
+      ctx.req.session.next = ctx.resolvedUrl;
+      await saveSession(ctx.req.session);
       return { redirect: { permanent: false, destination: "/" } };
     }
 
