@@ -175,7 +175,7 @@ const FilterForm = ({ showVideoEvidence }: FilterFormProps) => {
   const { query } = useRouter();
   return (
     <Stack as="form" px="6">
-      <Input name="userId" defaultValue={query.userId} size="sm" placeholder="Enter User ID" />
+      <Input name="userId" defaultValue={query.userId} size="sm" placeholder="User ID or username" />
       {showVideoEvidence && (
         <Checkbox
           name="hasVideoEvidence"

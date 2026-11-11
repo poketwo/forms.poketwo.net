@@ -42,7 +42,7 @@ import SubmissionContent from "~components/SubmissionContent";
 import SubmissionNotes from "~components/SubmissionNotes";
 import ErrorAlert from "~components/formium/ErrorAlert";
 import SubmissionsLayout, { submissionHref } from "~components/layouts/SubmissionsLayout";
-import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
+import { fetchSubmission, fetchSubmissionList, fetchUserFormSubmissions } from "~helpers/db";
 import { fetchAccountDeleted } from "~helpers/discord";
 import { formium } from "~helpers/formium";
 import { getFirstPageFieldSlugs, isAppealForm, isEnabledForm } from "~helpers/form";
@@ -61,7 +61,6 @@ import {
   makeSerializableNote,
 } from "~helpers/types";
 import { delay } from "~helpers/utils";
-import { supportsVideoEvidence } from "~helpers/videoEvidence";
 
 type HeaderButtonProps = ButtonProps & {
   icon: ReactElement;
@@ -545,13 +544,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.slug, {
-      hasVideoEvidence:
-        supportsVideoEvidence(form.slug) && query.hasVideoEvidence === "true",
-      page: Number(query.page ?? 1),
-      userId: query.userId?.toString(),
-      status: query.status ? Number(query.status) : { $nin: [1, 2] },
-    });
+    const _submissions = await fetchSubmissionList(form.slug, query);
     const submissions = await _submissions.toArray();
     const submission = await fetchSubmission(submissionId);
 

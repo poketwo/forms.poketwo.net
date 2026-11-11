@@ -1,4 +1,5 @@
 import { ObjectId } from "bson";
+import { ParsedUrlQuery } from "querystring";
 import { getUnixTime, sub } from "date-fns";
 import { Long, MongoClient, UpdateFilter } from "mongodb";
 import NodeCache from "node-cache";
@@ -12,7 +13,7 @@ import {
   Submission,
   SubmissionStatus,
 } from "./types";
-import { VIDEO_EVIDENCE_FIELD } from "./videoEvidence";
+import { VIDEO_EVIDENCE_FIELD, supportsVideoEvidence } from "./videoEvidence";
 
 // Guiduck DB
 
@@ -152,9 +153,13 @@ export const updateSubmission = async <T = any>(
   return collection.updateOne({ _id: ObjectId.createFromHexString(id) }, update);
 };
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 type FetchSubmissionsOptions = {
   hasVideoEvidence?: boolean;
   userId?: string;
+  /** A user ID, or the start of a username. */
+  user?: string;
   page?: number;
   onlyRecent?: boolean;
   status?: SubmissionStatus | object;
@@ -189,6 +194,15 @@ export const fetchSubmissions = async <T = any>(
     };
   }
 
+  if (options?.user) {
+    query = {
+      ...query,
+      ...(/^\d+$/.test(options.user)
+        ? { user_id: Long.fromString(options.user) }
+        : { user_tag: { $regex: `^${escapeRegExp(options.user)}`, $options: "i" } }),
+    };
+  }
+
   if (options?.hasVideoEvidence) {
     query = {
       ...query,
@@ -210,6 +224,22 @@ export const fetchSubmissions = async <T = any>(
   }
 
   return cursor;
+};
+
+// The staff submission list for the sidebar's page and filters.
+export const fetchSubmissionList = (formId: string, query: ParsedUrlQuery) => {
+  const user = query.userId?.toString().trim();
+  return fetchSubmissions(formId, {
+    hasVideoEvidence: supportsVideoEvidence(formId) && query.hasVideoEvidence === "true",
+    page: Number(query.page ?? 1),
+    user,
+    // Only open submissions by default, but a user search shows all of theirs.
+    status: query.status
+      ? Number(query.status)
+      : user
+        ? undefined
+        : { $nin: [SubmissionStatus.REJECTED, SubmissionStatus.ACCEPTED] },
+  });
 };
 
 export const fetchUserSubmissions = async <T = any>(userId: string) => {
