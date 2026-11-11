@@ -320,19 +320,25 @@ const PreviousSubmissionCard = ({ submission, formSlug }: PreviousSubmissionCard
 type CommentModalProps = {
   isOpen: boolean;
   isNote: boolean;
+  draftKey?: string;
   onClose: () => void;
   onSubmit: (comment: string) => Promise<void>;
 };
 
-const CommentModal = ({ isOpen, isNote, onClose, onSubmit }: CommentModalProps) => {
+const CommentModal = ({ isOpen, isNote, draftKey, onClose, onSubmit }: CommentModalProps) => {
   const [comment, setComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | undefined>();
   const kind = isNote ? "Note" : "Comment";
 
   useEffect(() => {
-    if (isOpen) setComment("");
-  }, [isOpen]);
+    if (isOpen) setComment((draftKey && localStorage.getItem(draftKey)) || "");
+  }, [isOpen, draftKey]);
+
+  const handleChange = (value: string) => {
+    setComment(value);
+    if (draftKey) localStorage.setItem(draftKey, value);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -359,7 +365,7 @@ const CommentModal = ({ isOpen, isNote, onClose, onSubmit }: CommentModalProps) 
                 name="comment"
                 placeholder={`Enter ${kind.toLowerCase()}...`}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => handleChange(e.target.value)}
                 height="200px"
               />
               <FormHelperText>
@@ -443,6 +449,12 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
     }
   };
 
+  // Accept/reject comments are kept per form and status so reviewers can reuse them; flag notes start blank.
+  const commentDraftKey =
+    statusWithComment !== undefined && !isFlagStatus(statusWithComment)
+      ? `submission-comment:${form.slug}:${statusWithComment}`
+      : undefined;
+
   const handleSubmit = async (comment: string) => {
     if (!statusWithComment) return;
     await updateStatus(statusWithComment, comment);
@@ -489,6 +501,7 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
       <CommentModal
         isOpen={statusWithComment !== undefined}
         isNote={statusWithComment !== undefined && isFlagStatus(statusWithComment)}
+        draftKey={commentDraftKey}
         onClose={() => setStatusWithComment(undefined)}
         onSubmit={handleSubmit}
       />
