@@ -135,6 +135,7 @@ export type Submission<T = any> = {
   status?: SubmissionStatus;
   embedded_id?: Long;
   reviewer_id?: Long;
+  reviewer_tag?: string;
   comment?: string;
   punishment?: Punishment;
   notes?: SubmissionNote[];
