@@ -32,7 +32,8 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { Form } from "@formium/types";
-import { FormEvent, ReactElement, useEffect, useState } from "react";
+import { useRouter } from "next/dist/client/router";
+import { FormEvent, ReactElement, useEffect, useRef, useState } from "react";
 import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 
 import Link from "next/link";
@@ -40,7 +41,7 @@ import PunishmentCard from "~components/PunishmentCard";
 import SubmissionContent from "~components/SubmissionContent";
 import SubmissionNotes from "~components/SubmissionNotes";
 import ErrorAlert from "~components/formium/ErrorAlert";
-import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
+import SubmissionsLayout, { submissionHref } from "~components/layouts/SubmissionsLayout";
 import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
 import { fetchAccountDeleted } from "~helpers/discord";
 import { formium } from "~helpers/formium";
@@ -286,9 +287,10 @@ const PreviousSubmissionCard = ({ submission, formSlug }: PreviousSubmissionCard
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
   const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
+  const { query } = useRouter();
 
   return (
-    <Link href={`/a/${formSlug}/submissions/${submission._id}`} passHref legacyBehavior>
+    <Link href={submissionHref(`/a/${formSlug}/submissions`, submission._id, query)} passHref legacyBehavior>
       <HStack
         as="a"
         shadow={shadow}
@@ -411,9 +413,12 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
   const [subNotes, setSubNotes] = useState(notes);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
 
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
 
+  useEffect(() => contentRef.current?.scrollTo(0, 0), [submission._id]);
   useEffect(() => setSubs(submissions), [submissions]);
   useEffect(() => setSub(submission), [submission]);
   useEffect(() => setSubNotes(notes), [notes]);
@@ -473,7 +478,7 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
           <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} accountDeleted={accountDeleted} />
         </Box>
-        <Box flex="1" overflow="auto" p="6" zIndex={0}>
+        <Box ref={contentRef} flex="1" overflow="auto" p="6" zIndex={0}>
           {isAppealForm(form.slug) && (
             <Box mb="4">
               <PunishmentCard formId={form.slug} submitted={submittedPunishment} live={livePunishment} />
