@@ -1,3 +1,4 @@
+import { localReviewFixture } from "./localReviewFixture";
 const DISCORD_API_BASE_URL = "https://discord.com/api/v10";
 const POKETWO_GUILD_ID = "716390832034414685";
 
@@ -23,6 +24,7 @@ export type ServerBan = { reason: string | null };
 
 // Returns null if the user isn't banned.
 export const fetchServerBan = async (userId: string): Promise<ServerBan | null> => {
+  if (localReviewFixture) return null;
   const response = await fetchDiscord(`/guilds/${POKETWO_GUILD_ID}/bans/${userId}`);
 
   if (response.status === 200) {
@@ -41,6 +43,7 @@ export const fetchServerBan = async (userId: string): Promise<ServerBan | null> 
 // Live roles, since guiduck's member cache doesn't track role changes without the members intent.
 // Returns null if the user isn't in the server.
 export const fetchServerMemberRoles = async (userId: string): Promise<string[] | null> => {
+  if (localReviewFixture) return ["718006431231508481"];
   const response = await fetchDiscord(`/guilds/${POKETWO_GUILD_ID}/members/${userId}`);
 
   if (response.status === 200) {
@@ -68,6 +71,7 @@ const isDeletedUser = (user: DiscordUser) =>
     user.discriminator === LEGACY_DELETED_DISCRIMINATOR);
 
 export const fetchAccountDeleted = async (userId: string): Promise<boolean> => {
+  if (localReviewFixture) return false;
   const response = await fetchDiscord(`/users/${userId}`);
 
   if (!response.ok) {

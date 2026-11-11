@@ -7,6 +7,7 @@ import { fetchSubmission, updateSubmission } from "~helpers/db";
 import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { hasFullAccess, permittedToViewForm } from "~helpers/permissions";
+import { localReviewFixture } from "~helpers/localReviewFixture";
 import {
   Submission,
   SubmissionNote,
@@ -30,6 +31,7 @@ const sendEmail = async (
   status: number,
   comment: string
 ) => {
+  if (localReviewFixture) return;
   if (!submission.email) return;
   if (!(status in EMAIL_UPDATES)) return;
 

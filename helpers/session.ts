@@ -8,6 +8,7 @@ import {
 import { ParsedUrlQuery } from "querystring";
 
 import { fetchMember, fetchPoketwoMember } from "./db";
+import { localReviewFixture, localReviewer } from "./localReviewFixture";
 import { Member, PoketwoMember, Position, User } from "./types";
 
 const IRON_CONFIG = {
@@ -54,6 +55,7 @@ enum SessionStatus {
 }
 
 const addMemberInfo = async (session: IronSession<SessionVars>) => {
+  if (localReviewFixture) session.user = localReviewer;
   const user = session.user;
 
   const member = user ? await fetchMember(user.id) : undefined;

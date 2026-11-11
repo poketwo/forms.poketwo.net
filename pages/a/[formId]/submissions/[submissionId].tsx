@@ -318,6 +318,21 @@ const PreviousSubmissionCard = ({ submission, formSlug }: PreviousSubmissionCard
   );
 };
 
+// Storage can be disabled or full; drafts are a convenience, so never let that break reviewing.
+const readDraft = (key: string) => {
+  try {
+    return localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+};
+
+const writeDraft = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+};
+
 type CommentModalProps = {
   isOpen: boolean;
   isNote: boolean;
@@ -333,12 +348,12 @@ const CommentModal = ({ isOpen, isNote, draftKey, onClose, onSubmit }: CommentMo
   const kind = isNote ? "Note" : "Comment";
 
   useEffect(() => {
-    if (isOpen) setComment((draftKey && localStorage.getItem(draftKey)) || "");
+    if (isOpen) setComment(draftKey ? readDraft(draftKey) : "");
   }, [isOpen, draftKey]);
 
   const handleChange = (value: string) => {
     setComment(value);
-    if (draftKey) localStorage.setItem(draftKey, value);
+    if (draftKey) writeDraft(draftKey, value);
   };
 
   const handleSubmit = async (e: FormEvent) => {
