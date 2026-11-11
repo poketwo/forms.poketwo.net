@@ -81,7 +81,11 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const submission = await fetchSubmission(submissionId);
   if (!submission) return res.status(404);
 
-  let update: any = { status: req.body.status, reviewer_id: Long.fromString(user.id) };
+  let update: any = {
+    status: req.body.status,
+    reviewer_id: Long.fromString(user.id),
+    reviewer_tag: user.username,
+  };
   if (req.body.comment) {
     update = { ...update, comment: req.body.comment };
   }

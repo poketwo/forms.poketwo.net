@@ -32,7 +32,8 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { Form } from "@formium/types";
-import { FormEvent, ReactElement, useEffect, useState } from "react";
+import { useRouter } from "next/dist/client/router";
+import { FormEvent, ReactElement, useEffect, useRef, useState } from "react";
 import { HiCheck, HiFlag, HiX } from "react-icons/hi";
 
 import Link from "next/link";
@@ -40,8 +41,8 @@ import PunishmentCard from "~components/PunishmentCard";
 import SubmissionContent from "~components/SubmissionContent";
 import SubmissionNotes from "~components/SubmissionNotes";
 import ErrorAlert from "~components/formium/ErrorAlert";
-import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
-import { fetchSubmission, fetchSubmissions, fetchUserFormSubmissions } from "~helpers/db";
+import SubmissionsLayout, { submissionHref } from "~components/layouts/SubmissionsLayout";
+import { fetchSubmission, fetchSubmissionList, fetchUserFormSubmissions } from "~helpers/db";
 import { fetchAccountDeleted } from "~helpers/discord";
 import { formium } from "~helpers/formium";
 import { getFirstPageFieldSlugs, isAppealForm, isEnabledForm } from "~helpers/form";
@@ -60,7 +61,6 @@ import {
   makeSerializableNote,
 } from "~helpers/types";
 import { delay } from "~helpers/utils";
-import { supportsVideoEvidence } from "~helpers/videoEvidence";
 
 type HeaderButtonProps = ButtonProps & {
   icon: ReactElement;
@@ -286,9 +286,10 @@ const PreviousSubmissionCard = ({ submission, formSlug }: PreviousSubmissionCard
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
   const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
+  const { query } = useRouter();
 
   return (
-    <Link href={`/a/${formSlug}/submissions/${submission._id}`} passHref legacyBehavior>
+    <Link href={submissionHref(`/a/${formSlug}/submissions`, submission._id, query)} passHref legacyBehavior>
       <HStack
         as="a"
         shadow={shadow}
@@ -317,22 +318,43 @@ const PreviousSubmissionCard = ({ submission, formSlug }: PreviousSubmissionCard
   );
 };
 
+// Storage can be disabled or full; drafts are a convenience, so never let that break reviewing.
+const readDraft = (key: string) => {
+  try {
+    return localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+};
+
+const writeDraft = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+};
+
 type CommentModalProps = {
   isOpen: boolean;
   isNote: boolean;
+  draftKey?: string;
   onClose: () => void;
   onSubmit: (comment: string) => Promise<void>;
 };
 
-const CommentModal = ({ isOpen, isNote, onClose, onSubmit }: CommentModalProps) => {
+const CommentModal = ({ isOpen, isNote, draftKey, onClose, onSubmit }: CommentModalProps) => {
   const [comment, setComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | undefined>();
   const kind = isNote ? "Note" : "Comment";
 
   useEffect(() => {
-    if (isOpen) setComment("");
-  }, [isOpen]);
+    if (isOpen) setComment(draftKey ? readDraft(draftKey) : "");
+  }, [isOpen, draftKey]);
+
+  const handleChange = (value: string) => {
+    setComment(value);
+    if (draftKey) writeDraft(draftKey, value);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -359,7 +381,7 @@ const CommentModal = ({ isOpen, isNote, onClose, onSubmit }: CommentModalProps) 
                 name="comment"
                 placeholder={`Enter ${kind.toLowerCase()}...`}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => handleChange(e.target.value)}
                 height="200px"
               />
               <FormHelperText>
@@ -405,9 +427,14 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
   const [subNotes, setSubNotes] = useState(notes);
   const [statusWithComment, setStatusWithComment] = useState<SubmissionStatus | undefined>();
 
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
 
+  useEffect(() => {
+    contentRef.current?.scrollTo(0, 0);
+  }, [submission._id]);
   useEffect(() => setSubs(submissions), [submissions]);
   useEffect(() => setSub(submission), [submission]);
   useEffect(() => setSubNotes(notes), [notes]);
@@ -443,6 +470,12 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
     }
   };
 
+  // Accept/reject comments are kept per form and status so reviewers can reuse them; flag notes start blank.
+  const commentDraftKey =
+    statusWithComment !== undefined && !isFlagStatus(statusWithComment)
+      ? `submission-comment:${form.slug}:${statusWithComment}`
+      : undefined;
+
   const handleSubmit = async (comment: string) => {
     if (!statusWithComment) return;
     await updateStatus(statusWithComment, comment);
@@ -461,7 +494,7 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
         <Box px="6" py="4" shadow={shadow} bg={bg} zIndex={1}>
           <SubmissionHeader submission={sub} onSetStatus={handleSetStatus} canFlag={!fullAccess} fullAccess={fullAccess} accountDeleted={accountDeleted} />
         </Box>
-        <Box flex="1" overflow="auto" p="6" zIndex={0}>
+        <Box ref={contentRef} flex="1" overflow="auto" p="6" zIndex={0}>
           {isAppealForm(form.slug) && (
             <Box mb="4">
               <PunishmentCard formId={form.slug} submitted={submittedPunishment} live={livePunishment} />
@@ -489,6 +522,7 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
       <CommentModal
         isOpen={statusWithComment !== undefined}
         isNote={statusWithComment !== undefined && isFlagStatus(statusWithComment)}
+        draftKey={commentDraftKey}
         onClose={() => setStatusWithComment(undefined)}
         onSubmit={handleSubmit}
       />
@@ -527,13 +561,7 @@ export const getServerSideProps = withServerSideSession<SubmissionPageProps, Sub
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.slug, {
-      hasVideoEvidence:
-        supportsVideoEvidence(form.slug) && query.hasVideoEvidence === "true",
-      page: Number(query.page ?? 1),
-      userId: query.userId?.toString(),
-      status: query.status ? Number(query.status) : { $nin: [1, 2] },
-    });
+    const _submissions = await fetchSubmissionList(form.slug, query);
     const submissions = await _submissions.toArray();
     const submission = await fetchSubmission(submissionId);
 
