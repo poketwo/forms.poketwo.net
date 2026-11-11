@@ -432,7 +432,9 @@ const SubmissionPage = ({ user, form, submissions, submission, notes, userSubmis
   const bg = useColorModeValue("white", "gray.800");
   const shadow = useColorModeValue("base", "md");
 
-  useEffect(() => contentRef.current?.scrollTo(0, 0), [submission._id]);
+  useEffect(() => {
+    contentRef.current?.scrollTo(0, 0);
+  }, [submission._id]);
   useEffect(() => setSubs(submissions), [submissions]);
   useEffect(() => setSub(submission), [submission]);
   useEffect(() => setSubNotes(notes), [notes]);
