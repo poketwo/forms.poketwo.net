@@ -38,6 +38,7 @@ import {
 } from "react-icons/hi";
 
 import { User } from "~helpers/types";
+import { defaultAvatarUrl, formatTag } from "~helpers/utils";
 
 type ProfileButtonProps = FlexProps & {
   user: User;
@@ -47,7 +48,7 @@ const ProfileButton = ({ user }: ProfileButtonProps) => {
   const menuButtonProps = useMenuButton();
   const avatarUrl = user.avatar
     ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=1024`
-    : `https://cdn.discordapp.com/embed/avatars/${Number(user.discriminator) % 5}.png`;
+    : defaultAvatarUrl(user.id, user.discriminator);
 
   return (
     <Flex
@@ -69,7 +70,7 @@ const ProfileButton = ({ user }: ProfileButtonProps) => {
         <Img w="8" h="8" rounded="md" objectFit="cover" src={avatarUrl} alt="Chakra UI" />
         <Box textAlign="start">
           <Box isTruncated fontWeight="semibold">
-            {user.username}#{user.discriminator}
+            {formatTag(user.username, user.discriminator)}
           </Box>
         </Box>
       </HStack>

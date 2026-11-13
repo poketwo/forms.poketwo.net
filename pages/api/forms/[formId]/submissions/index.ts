@@ -8,6 +8,7 @@ import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { fetchBanPunishment, fetchSuspensionPunishment, isPermanent } from "~helpers/punishment";
 import { Punishment, Submission } from "~helpers/types";
+import { formatTag } from "~helpers/utils";
 import {
   MAX_VIDEO_EVIDENCE_LINKS,
   VIDEO_EVIDENCE_FIELD,
@@ -98,7 +99,7 @@ const handler = async (req: NextIronRequest, res: NextApiResponse) => {
   const _submission = {
     form_id: formId,
     user_id: Long.fromString(user.id),
-    user_tag: `${user.username}#${user.discriminator}`,
+    user_tag: formatTag(user.username, user.discriminator),
     email: user.email,
     data,
     ...(punishment && { punishment }),

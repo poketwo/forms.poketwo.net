@@ -39,6 +39,7 @@ import {
 } from "react-icons/hi";
 
 import { SerializableSubmission, SubmissionStatus } from "~helpers/types";
+import { formatUserTag } from "~helpers/utils";
 import {
   VIDEO_EVIDENCE_FIELD,
   normalizeVideoEvidenceLinks,
@@ -136,7 +137,7 @@ const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
               </>
             ) : (
               <>
-                <Text fontWeight="bold">{submission.user_tag}</Text>
+                <Text fontWeight="bold">{formatUserTag(submission.user_tag)}</Text>
                 <Text color="gray.500" isTruncated>
                   {submission.user_id}
                 </Text>
