@@ -2,13 +2,12 @@ import { Heading, Stack, Text } from "@chakra-ui/layout";
 import { Form } from "@formium/types";
 
 import SubmissionsLayout from "~components/layouts/SubmissionsLayout";
-import { fetchSubmissions } from "~helpers/db";
+import { fetchSubmissionList } from "~helpers/db";
 import { isEnabledForm } from "~helpers/form";
 import { formium } from "~helpers/formium";
 import { permittedToViewForm } from "~helpers/permissions";
 import { AuthMode, withServerSideSession } from "~helpers/session";
 import { SerializableSubmission, User, makeSerializable } from "~helpers/types";
-import { supportsVideoEvidence } from "~helpers/videoEvidence";
 
 type SubmissionsPageProps = {
   user: User;
@@ -59,13 +58,7 @@ export const getServerSideProps = withServerSideSession<SubmissionsPageProps, Su
 
     if (!form) return { notFound: true };
 
-    const _submissions = await fetchSubmissions(form.slug, {
-      hasVideoEvidence:
-        supportsVideoEvidence(form.slug) && query.hasVideoEvidence === "true",
-      page: Number(query.page ?? 1),
-      userId: query.userId?.toString(),
-      status: query.status ? Number(query.status) : { $nin: [1, 2] },
-    });
+    const _submissions = await fetchSubmissionList(form.slug, query);
     const submissions = await _submissions.toArray();
 
     return {

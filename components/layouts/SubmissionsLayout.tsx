@@ -25,6 +25,7 @@ import {
 import { Form } from "@formium/types";
 import { useRouter } from "next/dist/client/router";
 import Link from "next/link";
+import { ParsedUrlQuery } from "querystring";
 import * as querystring from "querystring";
 import { forwardRef, useEffect, useMemo, useRef } from "react";
 import {
@@ -89,6 +90,12 @@ const getDateFromObjectId = (id: string): string => {
   });
 };
 
+// Links to a submission while keeping the list's page and filters.
+export const submissionHref = (baseHref: string, submissionId: string, query: ParsedUrlQuery) => {
+  const { formId, submissionId: _, ...listQuery } = query;
+  return `${baseHref}/${submissionId}?${querystring.stringify(listQuery)}`;
+};
+
 type SubmissionItemProps = {
   submission: SerializableSubmission;
   baseHref: string;
@@ -99,9 +106,7 @@ type SubmissionItemProps = {
 const SubmissionItem = forwardRef<HTMLDivElement, SubmissionItemProps>(
   ({ submission, baseHref, showVideoEvidence, userMode }: SubmissionItemProps, ref) => {
     const { query, asPath } = useRouter();
-    const { formId, submissionId, ...newQuery } = query;
-
-    const href = `${baseHref}/${submission._id}?${querystring.stringify(newQuery)}`;
+    const href = submissionHref(baseHref, submission._id, query);
     const activeBg = useColorModeValue("gray.100", "gray.700");
     const videoEvidenceColor = useColorModeValue("black", "white");
     const status = submission.status ?? SubmissionStatus.UNDER_REVIEW;
@@ -171,7 +176,7 @@ const FilterForm = ({ showVideoEvidence }: FilterFormProps) => {
   const { query } = useRouter();
   return (
     <Stack as="form" px="6">
-      <Input name="userId" defaultValue={query.userId} size="sm" placeholder="Enter User ID" />
+      <Input name="userId" defaultValue={query.userId} size="sm" placeholder="User ID or username" />
       {showVideoEvidence && (
         <Checkbox
           name="hasVideoEvidence"
